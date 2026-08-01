@@ -1,0 +1,6 @@
+@Hmoe_Maintenance_HostAddress = http://localhost:5123
+
+GET {{Hmoe_Maintenance_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,18 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Hmoe_Maintenance.DTOs.Request
+{
+    public class UpdateadditionalcostRequest
+    {
+        public decimal? LaborCost { get; set; }
+        public decimal? PartsCost { get; set; } = 0;
+        [Required]
+
+        public decimal? TotalAmount { get; set; }
+
+        public string? Reason { get; set; } = default!;
+        [Required]
+
+        public List<IFormFile>? ImageUrlS { get; set; } = default!;
+    }
+}
