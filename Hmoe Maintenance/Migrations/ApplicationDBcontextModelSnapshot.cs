@@ -585,6 +585,12 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<decimal>("InspectionPrice")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("PaymentApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("PaymentRejected")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -759,6 +765,9 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -777,7 +786,16 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<string>("StripePaymentIntentId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("StripeSessionId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("TransactionId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("sessionId")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
@@ -828,7 +846,7 @@ namespace Hmoe_Maintenance.Migrations
                     b.HasIndex("MaintenanceRequestId", "CustomerId")
                         .IsUnique();
 
-                    b.ToTable("Review");
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("Hmoe_Maintenance.Models.ServiceCategory", b =>

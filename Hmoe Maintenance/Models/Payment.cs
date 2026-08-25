@@ -6,16 +6,13 @@ namespace Hmoe_Maintenance.Models
     {
         Pending = 1,
         Paid = 2,
-        Failed = 3,
-        Refunded = 4,
-        Cancelled = 5
+        Cancelled = 3
     }
 
     public enum PaymentMethod
     {
         Cash = 1,
         Card = 2,
-        Wallet = 3
     }
     public class Payment
     {
@@ -36,6 +33,7 @@ namespace Hmoe_Maintenance.Models
 
         // رقم العملية من بوابة الدفع، مهم في الدفع بالكارت
         public string? TransactionId { get; set; }
+        public string? sessionId { get; set; }
 
         // اسم بوابة الدفع، مثل Stripe أو Paymob
         public string? GatewayName { get; set; }
@@ -45,6 +43,10 @@ namespace Hmoe_Maintenance.Models
 
         // وقت نجاح الدفع
         public DateTime? PaidAt { get; set; }
-    
-}
+        public DateTime? CancelledAt { get; set; }
+
+        public string? StripePaymentIntentId { get; set; }
+
+        public string? StripeSessionId { get; set; }
+    }
 }

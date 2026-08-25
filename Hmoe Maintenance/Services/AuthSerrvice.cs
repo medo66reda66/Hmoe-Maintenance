@@ -125,7 +125,7 @@ namespace Hmoe_Maintenance.Services
 
             var totalOtp = await userOtps.CountAsync(e => e.CreateAt >= last24Hours);
 
-            if (totalOtp > 4)
+            if (totalOtp > 5)
             {
                 return null;
             }
@@ -151,11 +151,15 @@ namespace Hmoe_Maintenance.Services
 
         public async Task<ApplicationuserOtp> ValidateOTP(ValidateOTPRequest validateOTP)
         {
-            var result =await _context.applicationuserOtps.FirstOrDefaultAsync(e => e.Applicationuserid == validateOTP.ApplicationUserId && e.Otp == validateOTP.OTP && e.Isvalid);
+            var result =await _context.applicationuserOtps.FirstOrDefaultAsync(e => e.Applicationuserid == validateOTP.ApplicationUserId
+            && e.Otp == validateOTP.OTP && e.Isvalid && e.Validto > DateTime.UtcNow);
+    
             if(result == null)
             {
                 return null;
             }
+            result.Isvalid = false;
+            await _context.SaveChangesAsync();
 
             return result;
         }

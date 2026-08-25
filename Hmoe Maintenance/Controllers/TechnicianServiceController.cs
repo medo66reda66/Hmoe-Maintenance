@@ -1,6 +1,9 @@
-﻿using Hmoe_Maintenance.DTOs.Request;
+﻿using Ecommers.Api.Utilities;
+using Hmoe_Maintenance.DTOs.Request;
+using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -9,6 +12,7 @@ namespace Hmoe_Maintenance.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
     public class TechnicianServiceController : ControllerBase
     {
         private readonly ITechnicianerviceSesrvice _technicianService;
@@ -18,16 +22,17 @@ namespace Hmoe_Maintenance.Controllers
             _technicianService = technicianervice;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [HttpGet("GetAllTechnicianService")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
+        public async Task<IActionResult> GetAllTechnicianService([FromQuery]FilterTechnicianServiceRequest filterTechnicianService,int page =1)
         {
-            var result = await _technicianService.GetAllTechnicianService();
+            var result = await _technicianService.GetAllTechnicianService(filterTechnicianService,page);
 
             return Ok(result);
         }
 
         // Get By Id
-        [HttpGet("{id}")]
+        [HttpGet("GetTechnicianServiceById/{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _technicianService.GetTechnicianServiceById(id);
@@ -39,7 +44,8 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         // Create
-        [HttpPost]
+        [HttpPost("CreateTechnicianService")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> Create([FromBody] TechnicianServiceRequest technicianService)
         {
 
@@ -47,6 +53,10 @@ namespace Hmoe_Maintenance.Controllers
                 return BadRequest(ModelState);
 
             var tecid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if(tecid == null)
+            {
+                return BadRequest("user not found");
+            }
 
             var result = await _technicianService.createTechnicianervice(technicianService,tecid);
 
@@ -57,7 +67,8 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         // Update
-        [HttpPut("{id}")]
+        [HttpPut("UpdateTechnicianService/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> Update(int id, [FromBody] TechnicianServiceRequest technicianService)
         {
             if (!ModelState.IsValid)
@@ -72,7 +83,8 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         // Delete
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteTechnicianService/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _technicianService.DeleteTechnicianervice(id, null);

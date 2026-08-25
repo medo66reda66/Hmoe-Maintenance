@@ -1,5 +1,6 @@
 ﻿using Hmoe_Maintenance.DataBase;
 using Hmoe_Maintenance.DTOs.Request;
+using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.Exception;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
@@ -11,15 +12,22 @@ namespace Hmoe_Maintenance.Services
     public class CompanyService : ICompanyService
     {
         private readonly AppDBcontext _context;
-        private readonly IAdminCompanyService _adminCompanyService;
+        private readonly IAdminCompanyTechService _adminCompanyService;
         private readonly UserManager<ApplicationUser> _userManager;
-        public CompanyService(AppDBcontext context, UserManager<ApplicationUser> userManager, IAdminCompanyService adminCompanyService)
+        public CompanyService(AppDBcontext context, UserManager<ApplicationUser> userManager, IAdminCompanyTechService adminCompanyService)
         {
             _context = context;
             _userManager = userManager;
             _adminCompanyService = adminCompanyService;
         }
+        public async Task<Company> GetmyCompany(string companyId)
+        {
+            var company = await _context.Companies
+                .Include(e => e.applicationUser)
+                .FirstOrDefaultAsync(c => c.ApplicationUserId == companyId);
 
+            return company;
+        }
         public async Task<Company> CreateCompany(CreateCompanyRequest companyRequest, string userId)
         {
             var checkUser = await _context.Companies.FirstOrDefaultAsync(c => c.ApplicationUserId == userId);
@@ -93,20 +101,6 @@ namespace Hmoe_Maintenance.Services
             }
             await _context.SaveChangesAsync();
 
-            return company;
-        }
-
-        public async Task<IEnumerable<Company>> GetAllCompany()
-        {
-            var companies = await _context.Companies.AsQueryable().ToListAsync();
-
-            return companies;
-        }
-
-        public async Task<Company> GetCompanyById(int companyId)
-        {
-            var company = await _context.Companies.FirstOrDefaultAsync(c => c.Id == companyId);
-           
             return company;
         }
 

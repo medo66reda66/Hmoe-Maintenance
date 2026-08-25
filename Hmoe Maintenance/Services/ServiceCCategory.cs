@@ -17,18 +17,9 @@ namespace Hmoe_Maintenance.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<ServiceCategory>> GetAllServiceCategories()
-        {
-            var serviceCategories = await _context.ServiceCategories.AsQueryable().ToListAsync();
-
-            return serviceCategories;
-        }
-        public async Task<ServiceCategory> GetServiceCategoryById(int id)
-        {
-            var serviceCategory = await _context.ServiceCategories.FirstOrDefaultAsync(e => e.Id == id);
-            return serviceCategory;
-        }
-        public async Task<ServiceCategory> CreateServiceCategory(CreateServiceCategoryRequest CreateserviceCategory)
+        //AdminANDCompany
+       
+        public async Task<ServiceCategory> CreateServiceCategory(string comid, CreateServiceCategoryRequest CreateserviceCategory)
         {
             var serviceCategory = new ServiceCategory
             {
@@ -36,6 +27,7 @@ namespace Hmoe_Maintenance.Services
                 Description = CreateserviceCategory.Description,
                 IsActive = CreateserviceCategory.IsActive,
             };
+
             if (CreateserviceCategory.IconUrl != null)
             {
                 var fileName = Guid.NewGuid().ToString() + Path.GetExtension(CreateserviceCategory.IconUrl.FileName);
@@ -51,15 +43,51 @@ namespace Hmoe_Maintenance.Services
             await _context.ServiceCategories.AddAsync(serviceCategory);
             await _context.SaveChangesAsync();
 
+            
+            if (CreateserviceCategory.CompanyServiceInspectionPrice != null && CreateserviceCategory.CompanyServiceStartingPrice != null
+                && CreateserviceCategory.CompanyServicecoDescription != null && CreateserviceCategory.CompanyServiceIsActive != null)
+            {
+                var company = await _context.Companies.FirstOrDefaultAsync(c => c.ApplicationUserId == comid);
+
+                if (company == null)
+                {
+                    return null;
+                }
+                var companyService = new Models.CompanyService
+                {
+                    ServiceCategoryId = serviceCategory.Id,
+                    CompanyId = company.Id,
+                    InspectionPrice = (decimal)CreateserviceCategory.CompanyServiceInspectionPrice,
+                    StartingPrice = CreateserviceCategory.CompanyServiceStartingPrice,
+                    Description = CreateserviceCategory.CompanyServicecoDescription,
+                    IsActive = (bool)CreateserviceCategory.CompanyServiceIsActive
+                };
+                await _context.CompanyServices.AddAsync(companyService);
+            }
+           
+            await _context.SaveChangesAsync();
+
             return serviceCategory;
         }
         public async Task<ServiceCategory> UpdateServiceCategory(int id, UpdateServiceCategoryRequest updateServiceCategory)
         {
-            var serviceCategory = await _context.ServiceCategories.FindAsync(id);
+            var serviceCategory = await _context.ServiceCategories.FirstOrDefaultAsync(e => e.Id == id);
+            var companyservice = await _context.CompanyServices.FirstOrDefaultAsync(c => c.ServiceCategoryId == id);
 
-            serviceCategory.Name = updateServiceCategory.Name;
-            serviceCategory.Description = updateServiceCategory.Description;
-            serviceCategory.IsActive = updateServiceCategory.IsActive;
+            serviceCategory.Name =
+                updateServiceCategory.Name ?? serviceCategory.Name;
+            serviceCategory.Description =
+                updateServiceCategory.Description ?? serviceCategory.Description;
+            serviceCategory.IsActive =
+                updateServiceCategory.IsActive ?? serviceCategory.IsActive;
+            companyservice.InspectionPrice = 
+                updateServiceCategory.CompanyServiceInspectionPrice??companyservice.InspectionPrice;
+            companyservice.StartingPrice = 
+                updateServiceCategory.CompanyServiceStartingPrice??companyservice.StartingPrice;
+            companyservice.Description =
+                updateServiceCategory.CompanyServicecoDescription??companyservice.Description;
+            companyservice.IsActive = 
+                updateServiceCategory.CompanyServiceIsActive??companyservice.IsActive;
             if (updateServiceCategory.IconUrl != null)
             {
                 var existingFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "ServiceUrl", serviceCategory.IconUrl);
@@ -81,6 +109,7 @@ namespace Hmoe_Maintenance.Services
                 serviceCategory.IconUrl = serviceCategory.IconUrl;
             }
 
+
             _context.ServiceCategories.Update(serviceCategory);
             await _context.SaveChangesAsync();
 
@@ -88,7 +117,8 @@ namespace Hmoe_Maintenance.Services
         }
         public async Task<bool> DeleteServiceCategory(int id)
         {
-            var serviceCategory = await _context.ServiceCategories.FindAsync(id);
+            var serviceCategory = await _context.ServiceCategories.FirstOrDefaultAsync(e => e.Id == id);
+            var companyService = await _context.CompanyServices.FirstOrDefaultAsync(c => c.ServiceCategoryId == id);
             if (serviceCategory == null)
             {
                 return false;
@@ -102,6 +132,10 @@ namespace Hmoe_Maintenance.Services
                 }
             }
             _context.ServiceCategories.Remove(serviceCategory);
+            if (companyService != null)
+            {
+                _context.CompanyServices.Remove(companyService);
+            }
             await _context.SaveChangesAsync();
             return true;
         }

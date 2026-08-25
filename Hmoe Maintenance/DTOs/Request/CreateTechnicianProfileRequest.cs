@@ -8,8 +8,6 @@ namespace Hmoe_Maintenance.DTOs.Request
         public int CompanyId { get; set; }
         [Required]
         public string Fullname { get; set; }
-        [Required,EmailAddress]
-        public string Email { get; set; }
         [Required]
         public string PhoneNumper { get; set; }
         [Required]

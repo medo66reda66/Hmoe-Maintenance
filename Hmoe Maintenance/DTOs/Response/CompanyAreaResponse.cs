@@ -10,12 +10,14 @@ namespace Hmoe_Maintenance.DTOs.Response
         public string? Area { get; set; } = null!;
         public bool IsActive { get; set; }
         public string companyName { get; set; } = null!;
+        public string companyOwnerName { get; set; } = null!;
         public string DiscriptionCompany { get; set; } =string.Empty;
         public string phoneNumberCompany { get; set; } = string.Empty;
         public string EmailCompany { get; set; } = string.Empty;
         public string? LicenseImageUrl { get; set; }=string.Empty;
         public string? CommercialRegistrationNumber { get; set; } = string.Empty;
         public string? CommercialRegistrationImageUrl { get; set; } = string.Empty;
+        public string? logourl  { get; set; } = string.Empty;
 
     }
 }

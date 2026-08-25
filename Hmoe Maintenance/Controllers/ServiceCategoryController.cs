@@ -1,15 +1,17 @@
-﻿using Hmoe_Maintenance.DTOs.Request;
+﻿using Ecommers.Api.Utilities;
+using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Hmoe_Maintenance.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
     public class ServiceCategoryController : ControllerBase
     {
         private readonly IServiceCCategory _serviceCategory;
@@ -19,37 +21,26 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllServiceCategories()
-        {
-          var ServiceCategory = await _serviceCategory.GetAllServiceCategories();
-            if (ServiceCategory == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(ServiceCategory);
-        }
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetServiceCategoryById(int id)
-        {
-            var ServiceCategory = await _serviceCategory.GetServiceCategoryById(id);
-            if (ServiceCategory == null)
-            {
-                return NotFound();
-            }
-            return Ok(ServiceCategory);
-        }
+        
         [HttpPost("Create")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> CreateServiceCategory(CreateServiceCategoryRequest createServiceCategoryRequest)
         {
-            var createdServiceCategory = await _serviceCategory.CreateServiceCategory(createServiceCategoryRequest);
+            var comid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (comid == null)
+            {
+                return Unauthorized("User is not authenticated.");
+            }
+
+            var createdServiceCategory = await _serviceCategory.CreateServiceCategory(comid,createServiceCategoryRequest);
             if (createdServiceCategory == null)
             {
                 return BadRequest("Failed to create service category.");
             }
-            return CreatedAtAction(nameof(GetServiceCategoryById), new { id = createdServiceCategory.Id }, createdServiceCategory);
+            return Ok(createdServiceCategory);
         }
         [HttpPut("Update/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> UpdateServiceCategory(int id, UpdateServiceCategoryRequest updateServiceCategoryRequest)
         {
             var updatedServiceCategory = await _serviceCategory.UpdateServiceCategory(id, updateServiceCategoryRequest);
@@ -60,6 +51,7 @@ namespace Hmoe_Maintenance.Controllers
             return Ok(updatedServiceCategory);
         }
         [HttpDelete("Delete/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> DeleteServiceCategory(int id)
         {
             var deletedServiceCategory = await _serviceCategory.DeleteServiceCategory(id);

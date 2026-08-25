@@ -40,6 +40,7 @@
         PriceOfferAccepted=25,
         PriceOfferRejected=26,
         WorkInProgress=27,
+        WorkCancelled=28,
 
     }
 

@@ -1,4 +1,5 @@
-﻿using Hmoe_Maintenance.DTOs.Request;
+﻿using Ecommers.Api.Utilities;
+using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +10,7 @@ namespace Hmoe_Maintenance.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
     public class CompanyArea : ControllerBase
     {
         private readonly ICompanyCoverageAreaService _companyCoverageAreaService;
@@ -19,27 +20,25 @@ namespace Hmoe_Maintenance.Controllers
             _companyCoverageAreaService = companyCoverageAreaService;
         }
 
-        [HttpGet("GetAll")]
-        public async Task<IActionResult> GetAllCompanyCoverageAreas()
+        [HttpGet("GetMyCompanyCoverageArea")]
+        [Authorize(Roles =($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> GetMyCompanyCoverageArea(int id)
         {
-            var coverageAreas = await _companyCoverageAreaService.GetAllCompanyCoverageAreas();
-            if (coverageAreas == null)
+            var companyId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (companyId == null)
             {
-                return NotFound("No company coverage areas found.");
+                return Unauthorized("User is not authenticated.");
             }
-            return Ok(coverageAreas);
-        }
-        [HttpGet("GetById/{id}")]
-        public async Task<IActionResult> GetCompanyCoverageAreaById(int id)
-        {
-            var coverageArea = await _companyCoverageAreaService.GetCompanyCoverageAreaById(id);
+
+            var coverageArea = await _companyCoverageAreaService.GetMyCompanyCoverageArea(companyId);
             if (coverageArea == null)
             {
                 return NotFound($"Company coverage area with ID {id} not found.");
             }
             return Ok(coverageArea);
         }
-        [HttpPost("Create")]
+        [HttpPost("CreateCompanyCoverageArea")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> CreateCompanyCoverageArea(CreateCompanyCoverageAreaRequest request)
         {
             if (request == null)
@@ -57,9 +56,10 @@ namespace Hmoe_Maintenance.Controllers
             {
                 return BadRequest("Failed to create company coverage area.");
             }
-            return CreatedAtAction(nameof(GetCompanyCoverageAreaById), new { id = createdCoverageArea.Id }, createdCoverageArea);
+            return Ok(createdCoverageArea);
         }
         [HttpPut("Update/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> UpdateCompanyCoverageArea(int id, UpdateCompanyCoverageAreaRequest request)
         {
             if (request == null)
@@ -74,6 +74,7 @@ namespace Hmoe_Maintenance.Controllers
             return Ok(updatedCoverageArea);
         }
         [HttpDelete("Delete/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> DeleteCompanyCoverageArea(int id)
         {
             var deletedCoverageArea = await _companyCoverageAreaService.DeleteCompanyCoverageArea(id);

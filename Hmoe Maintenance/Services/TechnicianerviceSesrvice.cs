@@ -1,7 +1,9 @@
 ﻿using Hmoe_Maintenance.DataBase;
 using Hmoe_Maintenance.DTOs;
 using Hmoe_Maintenance.DTOs.Request;
+using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.DTOs.Response;
+using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -17,12 +19,13 @@ namespace Hmoe_Maintenance.Services
             _Context = context;
         }
 
-        public async Task<List<ShowTechnicianServiceResponse>> GetAllTechnicianService()
+        public async Task<PaginationResponse<ShowTechnicianServiceResponse>> GetAllTechnicianService(FilterTechnicianServiceRequest filter,int page)
         {
-            var GetAll = await _Context.TechnicianServices
+            var GetAll =  _Context.TechnicianServices
                 .Include(e=>e.TechnicianProfile)
-                .ThenInclude(w=>w.Company)
-                .Include(e=>e.ServiceCategory).AsQueryable().ToListAsync();
+                .ThenInclude(w => w.Company)
+                .Include(e=>e.ServiceCategory)
+                .AsQueryable();
 
             var showGetAll = GetAll.Select(e => new ShowTechnicianServiceResponse
             {
@@ -35,16 +38,58 @@ namespace Hmoe_Maintenance.Services
                 DescriptionCompany = e.TechnicianProfile.Company.Description,
                 EmailCompany = e.TechnicianProfile.Company.Email,
                 Descriptionservicecategory = e.ServiceCategory.Description,
-                Nameservicecategory = e.ServiceCategory.Name,
-            }).ToList();
-            return showGetAll;
+                tecnicalservice = e.ServiceCategory.Name,
+            });
+
+            FilterTechnicianServiceResponse filterResponse = new();
+
+            if (filter.FullName != null)
+            {
+                showGetAll = showGetAll
+                    .Where(e => e.Fullnametechnicia.Contains(filter.FullName));
+
+                filterResponse.FullName = filter.FullName;
+            }
+            if (filter.Email != null)
+            {
+                showGetAll = showGetAll
+                    .Where(e => e.Emailtec.Contains(filter.Email));
+
+                filterResponse.Email = filter.Email;
+            }
+            if (filter.CompanyName != null)
+            {
+                showGetAll = showGetAll
+                    .Where(e => e.CompanyName.Contains(filter.CompanyName));
+
+                filterResponse.CompanyName = filter.CompanyName;
+            }
+            if (filter.ServiceName != null)
+            {
+                showGetAll = showGetAll
+                    .Where(e => e.tecnicalservice.Contains(filter.ServiceName));
+
+                filterResponse.ServiceName = filter.ServiceName;
+            }
+            if (filter.NationalId != null)
+            {
+                showGetAll = showGetAll
+                    .Where(e => e.NationalIdtec == filter.NationalId);
+
+                filterResponse.NationalId = filter.NationalId;
+            }
+
+            var result =await PaginationService.PaginateAsync(showGetAll, page, 5);
+
+
+            return result;
         }
 
         public async Task<ShowTechnicianServiceResponse?> GetTechnicianServiceById(int id)
         {
             var technicianService = await _Context.TechnicianServices
                 .Include(e => e.TechnicianProfile)
-                    .ThenInclude(t => t.Company)
+                .ThenInclude(t => t.Company)
                 .Include(e => e.ServiceCategory)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
@@ -62,7 +107,7 @@ namespace Hmoe_Maintenance.Services
                 DescriptionCompany = technicianService.TechnicianProfile.Company.Description,
                 EmailCompany = technicianService.TechnicianProfile.Company.Email,
                 Descriptionservicecategory = technicianService.ServiceCategory.Description,
-                Nameservicecategory = technicianService.ServiceCategory.Name,
+                tecnicalservice = technicianService.ServiceCategory.Name,
             };
         }
 

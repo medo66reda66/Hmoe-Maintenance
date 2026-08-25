@@ -65,6 +65,9 @@
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? CompletedAt { get; set; }
 
+        public bool PaymentApproved { get; set; }
+        public bool PaymentRejected { get; set; }
+
         public ICollection<MaintenanceRequestImage>? Images { get; set; }
             = new List<MaintenanceRequestImage>();
 

@@ -18,7 +18,7 @@ namespace Hmoe_Maintenance.Services
                 issuer: "https://localhost:7066",
                 audience: "https://localhost:7066",
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(15),
+                expires: DateTime.UtcNow.AddMinutes(30),
                 signingCredentials: securityKey
             );
 

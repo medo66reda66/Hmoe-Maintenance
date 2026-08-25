@@ -16,28 +16,14 @@ namespace Hmoe_Maintenance.Services
             _context = context;
         }
 
-        public async Task<List<CompanyAreaResponse>> GetAllCompanyCoverageAreas()
+        public async Task<List<CompanyAreaResponse>?> GetMyCompanyCoverageArea(string companyId)
         {
-            var coverageAreas = await _context.CompanyCoverageAreas.Include(c => c.Company).ToListAsync();
-            var showCompanyAreas = coverageAreas.Select(c => new CompanyAreaResponse
-            {
-                Id = c.Id,
-                Governorate = c.Governorate,
-                City = c.City,
-                Area = c.Area,
-                IsActive = c.IsActive,
-                companyName = c.Company.Name,
-                DiscriptionCompany = c.Company.Description,
-                phoneNumberCompany = c.Company.PhoneNumber,
-                EmailCompany = c.Company.Email!
-            }).ToList();
+            var coverageArea =  _context.CompanyCoverageAreas
+                .Include(e=>e.Company)
+                .Include(e=>e.Company.applicationUser)
+                .Where(c => c.Company.ApplicationUserId == companyId);
 
-            return showCompanyAreas;
-        }
-        public async Task<CompanyAreaResponse?> GetCompanyCoverageAreaById(int id)
-        {
-            var coverageArea = await _context.CompanyCoverageAreas.Include(e=>e.Company).FirstOrDefaultAsync(c => c.Id == id);
-            var showCompanyArea = new CompanyAreaResponse
+            var showCompanyArea =await coverageArea.Select(coverageArea => new CompanyAreaResponse
             {
                 Id = coverageArea.Id,
                 Governorate = coverageArea.Governorate,
@@ -45,10 +31,16 @@ namespace Hmoe_Maintenance.Services
                 Area = coverageArea.Area,
                 IsActive = coverageArea.IsActive,
                 companyName = coverageArea.Company.Name,
+                companyOwnerName = coverageArea.Company.applicationUser.FullName,
                 DiscriptionCompany = coverageArea.Company.Description,
                 phoneNumberCompany = coverageArea.Company.PhoneNumber,
-                EmailCompany = coverageArea.Company.Email!
-            };
+                EmailCompany = coverageArea.Company.Email!,
+                CommercialRegistrationNumber=coverageArea.Company.CommercialRegistrationNumber,
+                LicenseImageUrl = coverageArea.Company.LicenseImageUrl,
+                CommercialRegistrationImageUrl = coverageArea.Company.CommercialRegistrationNumber,
+                logourl=coverageArea.Company.LogoUrl
+            }).ToListAsync();
+
             return showCompanyArea;
         }
         public async Task<CompanyCoverageArea> CreateCompanyCoverageArea(CreateCompanyCoverageAreaRequest request, string userId)
@@ -84,6 +76,7 @@ namespace Hmoe_Maintenance.Services
             coverageArea.City = request.City;
             coverageArea.Area = request.Area;
             coverageArea.IsActive = request.IsActive;
+
             _context.CompanyCoverageAreas.Update(coverageArea);
             await _context.SaveChangesAsync();
             return coverageArea;

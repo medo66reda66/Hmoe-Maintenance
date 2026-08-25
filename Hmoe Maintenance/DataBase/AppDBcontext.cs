@@ -22,6 +22,7 @@ namespace Hmoe_Maintenance.DataBase
         public DbSet<MaintenanceRequest> MaintenanceRequests { get; set; } = default!;
         public DbSet<MaintenanceRequestImage> MaintenanceRequestImages { get; set; } = default!;
         public DbSet<Payment> Payment { get; set; } = default!;
+        public DbSet<Review> Reviews { get; set; } = default!;
         public DbSet<Notification> Notification { get; set; } = default!;
         public DbSet<Complaint> Complaint { get; set; } = default!;
         public DbSet<TechnicianProfile> TechnicianProfiles { get; set; } = default!;

@@ -32,6 +32,8 @@ namespace Hmoe_Maintenance
             }
             );
 
+            Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(option =>
             {
                 option.Password.RequireDigit = false;
@@ -52,16 +54,20 @@ namespace Hmoe_Maintenance
             builder.Services.AddScoped<ICompanyServiceservice, CompanyServiceservice>();
             builder.Services.AddScoped<ICompanyCoverageAreaService, CompanyCoverageAreaService>();
             builder.Services.AddScoped<ICompanyService, Services.CompanyService>();
+            builder.Services.AddScoped<ICompanyControlService,  CompanyControlService>();
             builder.Services.AddScoped<ITechnicianProfileServices, TechnicianProfileServices>();
             builder.Services.AddScoped<ITechnicianerviceSesrvice, TechnicianerviceSesrvice>();
             builder.Services.AddScoped<ITechnicianControlService, TechnicianControlService>();
-            builder.Services.AddScoped<IAdminCompanyService, AdminCompanyService>();
-            builder.Services.AddScoped<ICompanyControlService, CompanyControlService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IAdminCompanyTechService, AdminCompanyTechService>();
             builder.Services.AddScoped<IMaintenanceRequestService, MaintenanceRequestService>();
-            builder.Services.AddScoped<IAdminTechnicianService, AdminTechnicianService>();
+            builder.Services.AddScoped<ILockunlockUserService, LockunlockUserService>();
+            builder.Services.AddScoped<IAdminTechnicianByCOMPService, AdminTechnicianByCOMPService>();
+            builder.Services.AddScoped<ICompanyProfileAndDetailsService, CompanyProfileAndDetailsService>();
             builder.Services.AddScoped<IDBIntializer,DBIntializer>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddSingleton<IActionContextAccessor, ActionContextAccessor>();
+          
 
             builder.Services.AddAuthentication(opt => {
                 opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

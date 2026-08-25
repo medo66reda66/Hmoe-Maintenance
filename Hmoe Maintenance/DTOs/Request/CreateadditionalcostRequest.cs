@@ -8,9 +8,6 @@ namespace Hmoe_Maintenance.DTOs.Request
         [Required]
         public decimal LaborCost { get; set; }
         public decimal? PartsCost { get; set; } = 0;
-        [Required]
-
-        public decimal TotalAmount { get; set; }
         
         public string? Reason { get; set; } = default!;
         [Required]

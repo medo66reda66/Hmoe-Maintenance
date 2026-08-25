@@ -3,6 +3,7 @@ using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Hmoe_Maintenance.Services
@@ -10,55 +11,21 @@ namespace Hmoe_Maintenance.Services
     public class TechnicianProfileServices : ITechnicianProfileServices
     {
         private readonly AppDBcontext _Context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TechnicianProfileServices(AppDBcontext context)
+        public TechnicianProfileServices(AppDBcontext context, UserManager<ApplicationUser> userManager)
         {
             _Context = context;
+            _userManager = userManager;
         }
 
-        public async Task<IEnumerable<TechnincianProfileResponse>> GetAllTechnicianProfiles()
-        {
-            var profiles = await _Context.TechnicianProfiles
-                .Include(t => t.Company)
-                .Include(t => t.User)
-                .Include(t => t.TechnicianServices)
-                .ToListAsync();
-
-            var showProfiles = profiles.Select(e => new TechnincianProfileResponse
-            {
-                Id = e.Id,
-                CompanyName = e.Company != null ? e.Company.Name : string.Empty,
-                FullName = e.Fullname,
-                PhoneNumber = e.User != null ? e.User.PhoneNumber! : string.Empty,
-                Email = e.User != null ? e.User.Email! : string.Empty,
-                NationalId = e.NationalId,
-                ProfileImageUrl = e.ProfileImageUrl,
-                NationalIdFrontImageUrl = e.NationalIdFrontImageUrl,
-                NationalIdBackImageUrl = e.NationalIdBackImageUrl,
-                TechnicianDocumentUrl = e.TechnicianDocumentUrl,
-                technicianServices = e.TechnicianServices,
-                YearsOfExperience = e.YearsOfExperience,
-                Status = e.Status,
-                ApprovedByUserId = e.ApprovedByUserId,
-                RevenueShare = e.RevenueShare,
-                Bio = e.Bio,
-                AverageRating = e.AverageRating,
-                TotalCompletedJobs = e.TotalCompletedJobs,
-                IsAvailable = e.IsAvailable,
-                IsActive = e.IsActive,
-                CreatedAt = e.CreatedAt
-            }).ToList();
-
-            return showProfiles;
-        }
-
-        public async Task<TechnincianProfileResponse?> GetTechnicianProfileById(int id)
+        public async Task<TechnincianProfileResponse?> GetMyTechnicianProfile(string techid)
         {
             var profile = await _Context.TechnicianProfiles
                 .Include(t => t.Company)
                 .Include(t => t.User)
                 .Include(t => t.TechnicianServices)
-                .FirstOrDefaultAsync(t => t.Id == id);
+                .FirstOrDefaultAsync(t => t.UserId == techid);
 
             if (profile == null)
             {
@@ -77,7 +44,7 @@ namespace Hmoe_Maintenance.Services
                 NationalIdFrontImageUrl = profile.NationalIdFrontImageUrl,
                 NationalIdBackImageUrl = profile.NationalIdBackImageUrl,
                 TechnicianDocumentUrl = profile.TechnicianDocumentUrl,
-                technicianServices = profile.TechnicianServices,
+                technicianServices = profile.TechnicianServices.Select(e => e.ServiceCategory)!,
                 YearsOfExperience = profile.YearsOfExperience,
                 Status = profile.Status,
                 ApprovedByUserId = profile.ApprovedByUserId,
@@ -95,6 +62,7 @@ namespace Hmoe_Maintenance.Services
 
         public async Task<TechnicianProfile> CreateTechniciaProfile(CreateTechnicianProfileRequest request , string userId)
         {
+            var tech = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
             var technicianProfile = new TechnicianProfile
             {
                 UserId= userId,
@@ -102,7 +70,7 @@ namespace Hmoe_Maintenance.Services
                 NationalId = request.NationalId,
                 Fullname = request.Fullname,
                 YearsOfExperience = request.YearsOfExperience,
-                Email= request.Email,
+                Email= tech.Email,
                 PhoneNumper= request.PhoneNumper,
                 Bio = request.Bio,
                 Status = TechnicianStatus.Pending,

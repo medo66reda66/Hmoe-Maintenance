@@ -1,4 +1,5 @@
-﻿using Hmoe_Maintenance.DTOs.Request;
+﻿using Ecommers.Api.Utilities;
+using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +10,7 @@ namespace Hmoe_Maintenance.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
     public class TechnicianProfileController : ControllerBase
     {
         private readonly ITechnicianProfileServices _technicianProfileService;
@@ -17,20 +18,17 @@ namespace Hmoe_Maintenance.Controllers
         {
             _technicianProfileService = technicianProfileService;
         }
-        [HttpGet("GetAllTechnicians")]
-        public async Task<IActionResult> GetAllTechnicians()
+
+        [HttpGet("GetMyTechnicianById/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
+        public async Task<IActionResult> GetMTechnicianById()
         {
-            var technicians = await _technicianProfileService.GetAllTechnicianProfiles();
-            if (technicians == null)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
             {
-                return NotFound(new { message = "No technician profiles found" });
+                return Unauthorized(new { message = "User is not authenticated" });
             }
-            return Ok(technicians);
-        }
-        [HttpGet("GetTechnicianById/{id}")]
-        public async Task<IActionResult> GetTechnicianById(int id)
-        {
-            var technician = await _technicianProfileService.GetTechnicianProfileById(id);
+            var technician = await _technicianProfileService.GetMyTechnicianProfile(userId);
             if (technician == null)
             {
                 return NotFound(new { message = "Technician profile not found" });
@@ -38,6 +36,7 @@ namespace Hmoe_Maintenance.Controllers
             return Ok(technician);
         }
         [HttpPost("create")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> CreateTechnician( CreateTechnicianProfileRequest request)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -50,9 +49,10 @@ namespace Hmoe_Maintenance.Controllers
             {
                 return BadRequest(new { message = "Failed to create technician profile" });
             }
-            return CreatedAtAction("GetTechnicianById", new { id = technician.Id }, technician);
+            return Ok(technician);
         }
         [HttpPut("update/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> UpdateTechnician(int id, [FromForm] UpdateTechniciaProfileRequest request)
         {
             var technician = await _technicianProfileService.UpdateTechniciaProfile(id, request);
@@ -63,6 +63,7 @@ namespace Hmoe_Maintenance.Controllers
             return Ok(new { message = "Technician profile updated successfully", technician });
         }
         [HttpDelete("delete/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> DeleteTechnician(int id)
         {
             var result = await _technicianProfileService.DeleteTechnicianProfile(id);

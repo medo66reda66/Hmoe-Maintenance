@@ -6,10 +6,9 @@ namespace Hmoe_Maintenance.Services.Interfaces
 {
     public interface ITechnicianProfileServices
     {
+        Task<TechnincianProfileResponse?> GetMyTechnicianProfile(string techid);
         Task<TechnicianProfile> CreateTechniciaProfile(CreateTechnicianProfileRequest request, string userId);
         Task<TechnicianProfile?> UpdateTechniciaProfile(int id, UpdateTechniciaProfileRequest request);
-        Task<IEnumerable<TechnincianProfileResponse>> GetAllTechnicianProfiles();
-        Task<TechnincianProfileResponse?> GetTechnicianProfileById(int id);
         Task<bool> DeleteTechnicianProfile(int id);
     }
 }

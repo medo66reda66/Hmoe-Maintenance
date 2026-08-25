@@ -1,4 +1,6 @@
-﻿using Hmoe_Maintenance.DTOs.Request;
+﻿using Ecommers.Api.Utilities;
+using Hmoe_Maintenance.DTOs.Request;
+using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -11,32 +13,64 @@ namespace Hmoe_Maintenance.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
     public class CompanyController : ControllerBase
     {
         private readonly ICompanyService _companyService;
         private readonly ICompanyControlService _companyControlService;
+
         public CompanyController(ICompanyService companyService, ICompanyControlService companyControlService)
         {
             _companyService = companyService;
             _companyControlService = companyControlService;
         }
 
-        [HttpGet("GetAllCompanies")]
-        public async Task<IActionResult> GetAllCompanies()
+        [HttpGet("GetAllNotification")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> GetAllNotification([FromQuery]FilternotificationRequest filternotification ,int page = 1)
         {
-            var companies = await _companyService.GetAllCompany();
-            if (companies == null) {
-                return NotFound(new { message = "No companies found" });
+            var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userid == null)
+            {
+                return BadRequest("user not found");
+            }
+            var allnotifications = await _companyControlService.GetAllNotificationToCompany(userid,filternotification,page);
+            if (allnotifications == null)
+            {
+                return BadRequest("No Notificcatin");
             }
 
-            return Ok(companies);
+            return Ok(allnotifications);
         }
 
-        [HttpGet("GetCompanyById/{id}")]
-        public async Task<IActionResult> GetCompanyById(int id)
+        [HttpGet("GetAllNotificationByid/{Notid}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> GetAllNotificationByid(int Notid)
         {
-            var company = await _companyService.GetCompanyById(id);
+            var comid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (comid == null)
+            {
+                return BadRequest("user not found");
+            }
+            var allnotification = await _companyControlService.GetAllNotificationBycompanyById(Notid, comid);
+            if (allnotification == null)
+            {
+                return BadRequest("No Notificcatin");
+            }
+
+            return Ok(allnotification);
+        }
+
+        [HttpGet("GetMyCompany")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> GetmyCompany()
+        {
+            var companyId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (companyId == null)
+            {
+                return Unauthorized(new { message = "User is not authenticated" });
+            }
+            var company = await _companyService.GetmyCompany(companyId);
             if (company == null)
             {
                 return NotFound(new { message = "Company not found" });
@@ -45,7 +79,8 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpPost("create")]
-        public async Task<IActionResult> CreateCompany(CreateCompanyRequest companyRequest)
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> CreateCompany(CreateCompanyRequest companyRequest,CreateCompanyCoverageAreaRequest createCompanyCoverageArea)
         {
             var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userid == null)
@@ -57,10 +92,12 @@ namespace Hmoe_Maintenance.Controllers
             {
                 return BadRequest(new { message = "Failed to create company" });
             }
-            return CreatedAtAction("GetCompanyById", new { id = company.Id }, company);
+           
+            return Ok(new { message = "Company Create successfully", company });
         }
 
         [HttpPut("update/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> UpdateCompany(int id, UpdateCompanyRequest updateCompanyRequest)
         {
             var company = await _companyService.UpdateCompany(id, updateCompanyRequest);
@@ -72,6 +109,7 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpDelete("delete/{id}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> DeleteCompany(int id)
         {
             var result = await _companyService.DeleteCompany(id);
@@ -82,46 +120,33 @@ namespace Hmoe_Maintenance.Controllers
             }
             return NoContent();
         }
-
-        [HttpGet("GetAllNotification")]
-        public async Task<IActionResult> GetAllNotification()
+       
+        [HttpGet("getAllclientPayment")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> getAllclientPayment([FromQuery]FilterclientRequest filterclient,int page=1)
         {
-            var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userid == null)
+            var compid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (compid == null)
             {
-                return BadRequest("user not found");
-            }
-            var allnotifications =await _companyControlService.GetAllNotificationToCompany(userid);
-            if (allnotifications == null)
-            {
-                return BadRequest("No Notificcatin");
+                return NotFound();
             }
 
-            return Ok(allnotifications);
-        }
-        [HttpGet("GetAllNotificationByid/{Notid}")]
-        public async Task<IActionResult> GetAllNotificationByid(int Notid)
-        {
-            var comid = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (comid == null)
+            var payment =await _companyControlService.GetAllPaymentbyClient(compid,filterclient,page);
+            if (payment == null)
             {
-                return BadRequest("user not found");
-            }
-            var allnotification =await _companyControlService.GetAllNotificationBycompanyById(Notid, comid);
-            if (allnotification == null)
-            {
-                return BadRequest("No Notificcatin");
+                return BadRequest("No Payment");
             }
 
-            return Ok(allnotification);
+            return Ok(payment);
         }
 
 
         [HttpPost("ApproveMaintenanceRequest/{Notid}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> ApproveMaintenanceRequest(int Notid)
         {
             var approverequest =await _companyControlService.ApprovecompanyRequest(Notid);
-            if (approverequest == null)
+            if (approverequest == false)
             {
                 return BadRequest();
             }
@@ -129,6 +154,7 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpPost("RejectedMaintenanceRequest/{Notid}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> RejectedMaintenanceRequest(int Notid)
         {
             var rejectedrequest =await _companyControlService.RejectCompanyRequest(Notid);
@@ -140,6 +166,7 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpPost("CreatepriseReuest")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> CreatepriseReuest(int notid,CreatepriceRequest createprice)
         {
             var pricereq =await _companyControlService.Createprisebycompany(notid, createprice);
@@ -152,12 +179,13 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpPost("AssignedTechnicianRequest/{Notid}")]
-        public async Task<IActionResult> AssignedTechnicianRequest(int Notid,[FromBody]int tecuserid)
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> AssignedTechnicianRequest(int Notid,int tecuserid)
         {
             var result =await _companyControlService.AssignedTechnicianRequest(Notid, tecuserid);
             if (result == false)
             {
-                return BadRequest();
+                return BadRequest("Tech is not free");
             }
 
             return Ok();

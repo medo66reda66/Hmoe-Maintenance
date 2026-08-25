@@ -17,7 +17,8 @@ namespace Hmoe_Maintenance.DTOs.Response
         public string NationalIdBackImageUrl { get; set; } = default!;
 
         public string? TechnicianDocumentUrl { get; set; } = default!;
-        public IEnumerable<TechnicianService>? technicianServices { get; set; }
+        public IEnumerable<ServiceCategory>? technicianServices { get; set; }
+        public IEnumerable<string>? servisecategoryname { get; set; }
         public int YearsOfExperience { get; set; }
         public TechnicianStatus Status { get; set; }
         public string? ApprovedByUserId { get; set; }
@@ -30,7 +31,6 @@ namespace Hmoe_Maintenance.DTOs.Response
 
         public bool IsAvailable { get; set; } = true;
         public bool IsActive { get; set; } = true;
-
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
