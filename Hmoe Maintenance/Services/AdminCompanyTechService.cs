@@ -5,6 +5,7 @@ using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.Design;
 
@@ -13,10 +14,12 @@ namespace Hmoe_Maintenance.Services
     public class AdminCompanyTechService : IAdminCompanyTechService
     {
         private readonly AppDBcontext _dBcontext;
+        private readonly INotificationService _notificationService;
 
-        public AdminCompanyTechService(AppDBcontext dBcontext)
+        public AdminCompanyTechService(AppDBcontext dBcontext, INotificationService notificationService)
         {
             _dBcontext = dBcontext;
+            _notificationService = notificationService;
         }
 
         public async Task<Notification> Sendnotification(string adminId, CreateSendNotificationRequest sendNotificationRequest)
@@ -33,6 +36,8 @@ namespace Hmoe_Maintenance.Services
             };
             _dBcontext.Notification.Add(notification);
             await _dBcontext.SaveChangesAsync();
+
+            await _notificationService.SendToUserAsync(notification);
 
             return notification;
         }
@@ -371,8 +376,9 @@ namespace Hmoe_Maintenance.Services
             };
 
             _dBcontext.Notification.Add(notifyCompany);
-
             await _dBcontext.SaveChangesAsync();
+
+            await _notificationService.SendToUserAsync(notification);
 
             return true;
         }
@@ -431,8 +437,9 @@ namespace Hmoe_Maintenance.Services
             };
 
             _dBcontext.Notification.Add(notifyCompany);
-
             await _dBcontext.SaveChangesAsync();
+
+            await _notificationService.SendToUserAsync(notification);
 
             return true;
         }
@@ -467,9 +474,9 @@ namespace Hmoe_Maintenance.Services
             };
 
             _dBcontext.Notification.Add(notifyCompany);
-
             await _dBcontext.SaveChangesAsync();
 
+            await _notificationService.SendToUserAsync(notification);
             return true;
         }
 
@@ -502,8 +509,9 @@ namespace Hmoe_Maintenance.Services
             };
 
             _dBcontext.Notification.Add(notifyCompany);
-
             await _dBcontext.SaveChangesAsync();
+
+            await _notificationService.SendToUserAsync(notification);
 
             return true;
         }

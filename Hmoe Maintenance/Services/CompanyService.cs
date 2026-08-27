@@ -4,6 +4,7 @@ using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.Exception;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +15,13 @@ namespace Hmoe_Maintenance.Services
         private readonly AppDBcontext _context;
         private readonly IAdminCompanyTechService _adminCompanyService;
         private readonly UserManager<ApplicationUser> _userManager;
-        public CompanyService(AppDBcontext context, UserManager<ApplicationUser> userManager, IAdminCompanyTechService adminCompanyService)
+        private readonly INotificationService _notificationService;
+        public CompanyService(AppDBcontext context, UserManager<ApplicationUser> userManager, IAdminCompanyTechService adminCompanyService, INotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
             _adminCompanyService = adminCompanyService;
+            _notificationService = notificationService;
         }
         public async Task<Company> GetmyCompany(string companyId)
         {
@@ -98,8 +101,10 @@ namespace Hmoe_Maintenance.Services
                     RelatedEntityId = company.ApplicationUserId,
                 };
                _context.Notification.Add(notification);
+                await _context.SaveChangesAsync();
+               await _notificationService.SendToUserAsync(notification);
             }
-            await _context.SaveChangesAsync();
+         
 
             return company;
         }
@@ -203,6 +208,8 @@ namespace Hmoe_Maintenance.Services
                         RelatedEntityId = company.ApplicationUserId,
                     };
                     _context.Notification.Add(notification);
+                      await _context.SaveChangesAsync();
+                      await _notificationService.SendToUserAsync(notification);
                 }
             }
             ////////////////
@@ -210,7 +217,7 @@ namespace Hmoe_Maintenance.Services
             //////
             ///
             _context.Companies.Update(company);
-                await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
          
                 return company;
         }

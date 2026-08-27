@@ -5,6 +5,7 @@ using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,10 +20,12 @@ namespace Hmoe_Maintenance.Services
     public class MaintenanceRequestService : IMaintenanceRequestService
     {
         private readonly AppDBcontext _Context;
+        private readonly INotificationService _notificationService;
 
-        public MaintenanceRequestService(AppDBcontext context)
+        public MaintenanceRequestService(AppDBcontext context, INotificationService notificationService)
         {
             _Context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<PaginationResponse<Notification>> GetAllNotificationToClient(string clientid,FilternotificationRequest filternotification,int page)
@@ -236,9 +239,10 @@ namespace Hmoe_Maintenance.Services
             await _Context.Notification.AddAsync(notification);
             await _Context.SaveChangesAsync();
 
+            await _notificationService.SendToUserAsync(notification);
+
             return createMaintenanceRequest;
         }
-
         public async Task<bool> Approveprice(int notificationId)
         {
             var notification = await _Context.Notification
@@ -264,6 +268,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(companyNotification);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(companyNotification);
 
             return true;
         }
@@ -300,6 +305,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(companyNotification);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(companyNotification);
 
             return true;
         }
@@ -342,7 +348,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(noti);
             return true;
         }
         public async Task<bool> RejectAdditionalCost(int notificationId, string? note)
@@ -382,6 +388,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
+           await _notificationService.SendToUserAsync(noti);
 
             return true;
         }

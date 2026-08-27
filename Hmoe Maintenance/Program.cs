@@ -3,6 +3,7 @@ using Hmoe_Maintenance.DataBase;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Hmoe_Maintenance.Utilise;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -31,6 +32,8 @@ namespace Hmoe_Maintenance
                 option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             }
             );
+
+            builder.Services.AddSignalR();
 
             Stripe.StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
@@ -62,6 +65,7 @@ namespace Hmoe_Maintenance
             builder.Services.AddScoped<IAdminCompanyTechService, AdminCompanyTechService>();
             builder.Services.AddScoped<IMaintenanceRequestService, MaintenanceRequestService>();
             builder.Services.AddScoped<ILockunlockUserService, LockunlockUserService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<IAdminTechnicianByCOMPService, AdminTechnicianByCOMPService>();
             builder.Services.AddScoped<ICompanyProfileAndDetailsService, CompanyProfileAndDetailsService>();
             builder.Services.AddScoped<IDBIntializer,DBIntializer>();
@@ -94,21 +98,21 @@ namespace Hmoe_Maintenance
             var service = scope.ServiceProvider.GetService<IDBIntializer>();
             service!.Intialize();
 
-
+           
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.MapOpenApi();
                 app.MapScalarApiReference();
             }
-
+            
             app.UseHttpsRedirection();
 
             app.UseAuthentication();
             app.UseStaticFiles();
             app.UseAuthorization();
-           
 
+            app.MapHub<NotificationHub>("/notificationHub");
             app.MapControllers();
 
             app.Run();

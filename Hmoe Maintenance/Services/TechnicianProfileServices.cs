@@ -3,6 +3,7 @@ using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,11 +13,13 @@ namespace Hmoe_Maintenance.Services
     {
         private readonly AppDBcontext _Context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public TechnicianProfileServices(AppDBcontext context, UserManager<ApplicationUser> userManager)
+        public TechnicianProfileServices(AppDBcontext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _Context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         public async Task<TechnincianProfileResponse?> GetMyTechnicianProfile(string techid)
@@ -135,7 +138,7 @@ namespace Hmoe_Maintenance.Services
             };
                _Context.Notification.Add(notification);
                await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notification);
             return technicianProfile ;
         }
 
@@ -261,6 +264,7 @@ namespace Hmoe_Maintenance.Services
                 };
                 _Context.Notification.Add(notification);
                 await _Context.SaveChangesAsync();
+                await _notificationService.SendToUserAsync(notification);
             }
 
             ////////////////

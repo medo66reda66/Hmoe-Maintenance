@@ -5,6 +5,7 @@ using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,11 +16,13 @@ namespace Hmoe_Maintenance.Services
     {
         private readonly AppDBcontext _Context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public CompanyControlService(AppDBcontext context, UserManager<ApplicationUser> userManager)
+        public CompanyControlService(AppDBcontext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _Context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         public async Task<PaginationResponse<Notification>> GetAllNotificationToCompany(string userid,FilternotificationRequest filternotification,int page)
@@ -191,6 +194,8 @@ namespace Hmoe_Maintenance.Services
             await _Context.Notification.AddAsync(notif);
             await _Context.SaveChangesAsync();
 
+            await _notificationService.SendToUserAsync(notif);
+
             return true;
         }
 
@@ -231,7 +236,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(notif);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notification);
             return true;
         }
 
@@ -275,7 +280,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(notification);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notification);
             return createprise;
         }
 
@@ -332,7 +337,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(noti);
             return true;
         }
     }

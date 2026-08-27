@@ -42,6 +42,7 @@
         WorkInProgress=27,
         WorkCancelled=28,
 
+        UpdateAdditionalCostRequested=29,
     }
 
     public class Notification

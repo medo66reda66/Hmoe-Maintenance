@@ -31,11 +31,6 @@ namespace Hmoe_Maintenance.DataBase
         public DbSet<TechnicianProfileCopy> TechnicianProfileCopies { get; set; } = default!;
         public DbSet<ApplicationuserOtp> applicationuserOtps { get; set; } = default!;
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseSqlServer("Data Source=.;Database=HmoeMaintenance;Integrated Security=True;Connect Timeout=30;Encrypt=True;Trust Server Certificate=True;Application Intent=ReadWrite;Multi Subnet Failover=False");
-            base.OnConfiguring(optionsBuilder);
-        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

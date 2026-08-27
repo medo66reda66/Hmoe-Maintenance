@@ -5,6 +5,7 @@ using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,10 +14,12 @@ namespace Hmoe_Maintenance.Services
     public class TechnicianControlService : ITechnicianControlService
     {
         private readonly AppDBcontext _Context;
+        private readonly INotificationService _notificationService;
 
-        public TechnicianControlService(AppDBcontext context)
+        public TechnicianControlService(AppDBcontext context, INotificationService notificationService)
         {
             _Context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<PaginationResponse<Notification>> GetAllNotificationByTech(string techid,FilternotificationRequest filternotification,int page)
@@ -129,7 +132,7 @@ namespace Hmoe_Maintenance.Services
             };
             await _Context.Notification.AddAsync(newNotification);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notification);
             return true;
         }
 
@@ -165,6 +168,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(noti);
             return true;
 
         }
@@ -203,6 +207,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(noti);
             return true;
 
         }
@@ -318,6 +323,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(notification);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(notification);
 
             return createadditionalcost;
         }
@@ -373,7 +379,25 @@ namespace Hmoe_Maintenance.Services
                 }
 
             }
+
+            var notification = new Notification
+            {
+                UserId = additiancost.MaintenanceRequest.CustomerId,
+                Title = "Additional Cost Request Updated",
+                Message = $"The additional cost request for maintenance request ({additiancost.MaintenanceRequest.RequestNumber}) has been updated." +
+                          $"\nLabor Cost: {additiancost.LaborCost}" +
+                          $"\nParts Cost: {additiancost.PartsCost}" +
+                          $"\nTotal Amount: {additiancost.TotalAmount}" +
+                          $"\nReason: {additiancost.Reason}",
+                Type = NotificationType.UpdateAdditionalCostRequested,
+                IsRead = false,
+                RelatedEntityId = additiancost.Id.ToString(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            await _Context.Notification.AddAsync(notification);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(notification);
 
             return updateadditionalcost;
         }
@@ -446,7 +470,7 @@ namespace Hmoe_Maintenance.Services
 
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(noti);
             return true;
         }
 
@@ -494,6 +518,7 @@ namespace Hmoe_Maintenance.Services
             };
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(noti);
             return true;
         }
 
@@ -532,7 +557,7 @@ namespace Hmoe_Maintenance.Services
             };
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(noti);
             return true;
 
         }
@@ -569,6 +594,7 @@ namespace Hmoe_Maintenance.Services
             };
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
+            await _notificationService.SendToUserAsync(noti);
             return true;
 
         }

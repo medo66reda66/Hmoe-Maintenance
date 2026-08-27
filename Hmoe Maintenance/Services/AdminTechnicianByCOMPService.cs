@@ -4,6 +4,7 @@ using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
+using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
@@ -13,10 +14,12 @@ namespace Hmoe_Maintenance.Services
     public class AdminTechnicianByCOMPService : Interfaces.IAdminTechnicianByCOMPService
     {
         private readonly AppDBcontext _dBcontext;
+        private readonly INotificationService _notificationService;
 
-        public AdminTechnicianByCOMPService(AppDBcontext dBcontext)
+        public AdminTechnicianByCOMPService(AppDBcontext dBcontext, INotificationService notificationService)
         {
             _dBcontext = dBcontext;
+            _notificationService = notificationService;
         }
 
         public async Task<PaginationResponse<TechnincianProfileResponse>> GetAllTechnicianProfiles(string compid,FilterTechnicianRequest filter,int page)
@@ -201,6 +204,8 @@ namespace Hmoe_Maintenance.Services
 
            await _dBcontext.Notification.AddAsync(notifyCompany);
             await _dBcontext.SaveChangesAsync();
+
+            await _notificationService.SendToUserAsync(notifyCompany);
             return true;
         }
         public async Task<bool> RejectTechnicienCreate(int notifId)
@@ -239,7 +244,7 @@ namespace Hmoe_Maintenance.Services
             _dBcontext.Notification.Add(notifyTechnician);
 
             await _dBcontext.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notifyTechnician);
             return true;
         }
         public async Task<bool> ApproveTechnicianUpdate(int notifId)
@@ -300,7 +305,7 @@ namespace Hmoe_Maintenance.Services
             _dBcontext.Notification.Add(notification);
 
             await _dBcontext.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notification);
             return true;
         }
         public async Task<bool> RejectTechnicianUpdate(int notifId)
@@ -333,10 +338,9 @@ namespace Hmoe_Maintenance.Services
             _dBcontext.Notification.Add(notification);
 
             await _dBcontext.SaveChangesAsync();
-
+            await _notificationService.SendToUserAsync(notification);
             return true;
         }
-
         public async Task<bool> LockUnlockTech(int id)
         {
             var tech = await _dBcontext.TechnicianProfileCopies.FirstOrDefaultAsync(e => e.Id == id);
