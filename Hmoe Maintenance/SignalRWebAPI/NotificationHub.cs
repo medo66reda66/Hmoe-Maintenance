@@ -20,11 +20,6 @@ namespace Hmoe_Maintenance.SignalRWebAPI
             }
             await base.OnConnectedAsync();
         }
-
-        //public override async Task OnDisconnectedAsync(Exception? exception)
-        //{
-        //    await base.OnDisconnectedAsync(exception);
-        //}
     }
 }
 

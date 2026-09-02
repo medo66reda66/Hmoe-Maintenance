@@ -1,4 +1,5 @@
-﻿using Hmoe_Maintenance.DataBase;
+﻿using Azure;
+using Hmoe_Maintenance.DataBase;
 using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
@@ -21,21 +22,20 @@ namespace Hmoe_Maintenance.Services
             _dBcontext = dBcontext;
             _notificationService = notificationService;
         }
-
-        public async Task<PaginationResponse<TechnincianProfileResponse>> GetAllTechnicianProfiles(string compid,FilterTechnicianRequest filter,int page)
+        public async Task<PaginationResponse<TechnincianProfileResponse, FilterTechnicianResponse>> GetAllTechnicianProfiles(string compid,FilterTechnicianRequest filter,int page)
         {
             var profiles = _dBcontext.TechnicianProfiles
-                .Include(t => t.Company)
+                .Include(t => t.CompanyCopy)
                 .Include(t => t.User)
                 .Include(t => t.TechnicianServices)
-                .Where(e=>e.Company.ApplicationUserId == compid )
+                .Where(e=>e.CompanyCopy.ApplicationUserId == compid )
                 .AsNoTracking()
                 .AsQueryable();
 
             var showTechnicianProfiles =  profiles.Select(e => new TechnincianProfileResponse
             {
                 Id = e.Id,
-                CompanyName = e.Company != null ? e.Company.Name : string.Empty,
+                CompanyName = e.CompanyCopy != null ? e.CompanyCopy.Name : string.Empty,
                 FullName = e.Fullname,
                 PhoneNumber = e.User != null ? e.User.PhoneNumber! : string.Empty,
                 Email = e.User != null ? e.User.Email! : string.Empty,
@@ -108,22 +108,23 @@ namespace Hmoe_Maintenance.Services
                 filterResponse.TechnicalService = filter.TechnicalService;
             }
 
-            var Result = await PaginationService.PaginateAsync(showTechnicianProfiles, page, 5);
+            var Result = await PaginationService.PaginateAsync(showTechnicianProfiles, page,filterResponse, 5);
 
             return Result;
         }
         public async Task<TechnincianProfileResponse> GetTechnicianProfilesBYid(string compid, int id)
         {
             var profiles = await _dBcontext.TechnicianProfiles
-                .Include(t => t.Company)
+                .Include(t => t.CompanyCopy)
                 .Include(t => t.User)
                 .Include(t => t.TechnicianServices)
-                .FirstOrDefaultAsync(e => e.Id == id && e.Company.ApplicationUserId == compid);
+                .ThenInclude(e=>e.ServiceCategory)
+                .FirstOrDefaultAsync(e => e.Id == id && e.CompanyCopy.ApplicationUserId == compid);
 
             var showProfiles =  new TechnincianProfileResponse
             {
                 Id = profiles.Id,
-                CompanyName = profiles.Company != null ? profiles.Company.Name : string.Empty,
+                CompanyName = profiles.CompanyCopy != null ? profiles.CompanyCopy.Name : string.Empty,
                 FullName = profiles.Fullname,
                 PhoneNumber = profiles.User != null ? profiles.User.PhoneNumber! : string.Empty,
                 Email = profiles.User != null ? profiles.User.Email! : string.Empty,
@@ -147,6 +148,113 @@ namespace Hmoe_Maintenance.Services
 
             return showProfiles;
         }
+        public async Task<PaginationResponse<ShowTechpayout, FilterTechPayoutResponse>> GetTechpayout(string compid,FilterTechPayoutRequest filter,int page)
+        {
+            var techpayout = _dBcontext.technicianPayouts
+                .Include(e=>e.TechnicianProfileCopy)
+                .ThenInclude(e=>e.CompanyCopy)
+                .Where(e=>e.TechnicianProfileCopy.CompanyCopy.ApplicationUserId == compid)
+                .AsQueryable().Select(e=> new ShowTechpayout
+                {
+                    Id = e.Id,
+                    TechnicianProfileCopyemail = e.TechnicianProfileCopy.Email,
+                    TechnicianProfileCopyId = e.TechnicianProfileCopyId,
+                    TechnicianProfileCopyRevenueShare = e.TechnicianProfileCopy.RevenueShare,
+                    TechnicianProfileCopyNationalId = e.TechnicianProfileCopy.NationalId,
+                    TechnicianProfileCopyname = e.TechnicianProfileCopy.CompanyCopy.Name,
+                    Amount = e.Amount,
+                    Notes = e.Notes,
+                    PayoutDate = e.PayoutDate,
+                });
+
+            FilterTechPayoutResponse techPayoutResponse = new();
+            if (!string.IsNullOrWhiteSpace(filter.Name))
+            {
+                techpayout = techpayout.Where(e =>
+                    e.TechnicianProfileCopyname.Contains(filter.Name));
+                techPayoutResponse.Name = filter.Name;
+            }
+
+            // Filter by National ID
+            if (!string.IsNullOrWhiteSpace(filter.NationalId))
+            {
+                techpayout = techpayout.Where(e =>
+                    e.TechnicianProfileCopyNationalId.Contains(filter.NationalId));
+                techPayoutResponse.NationalId = filter.NationalId;
+            }
+
+            // Filter by Email
+            if (!string.IsNullOrWhiteSpace(filter.Email))
+            {
+                techpayout = techpayout.Where(e =>
+                    e.TechnicianProfileCopyemail.Contains(filter.Email));
+                techPayoutResponse.Email = filter.Email;
+            }
+
+            // Filter by FromDate
+            if (filter.FromDate.HasValue)
+            {
+                techpayout = techpayout.Where(e =>
+                    e.PayoutDate >= filter.FromDate.Value);
+                techPayoutResponse.FromDate = filter.FromDate.Value;
+            }
+
+            // Filter by ToDate
+            if (filter.ToDate.HasValue)
+            {
+                techpayout = techpayout.Where(e =>
+                    e.PayoutDate <= filter.ToDate.Value);
+                techPayoutResponse.ToDate = filter.ToDate.Value;
+            }
+
+            var result = await PaginationService.PaginateAsync(techpayout,page,techPayoutResponse, 10);
+
+            return result;
+        }
+        public async Task<TechnicianProfileCopy?> CreateRevenueShare(int techId,decimal revenueShare)
+        {
+            if (revenueShare < 0 || revenueShare > 100)
+            {
+                throw new ArgumentException(
+                    "Revenue share must be between 0 and 100.");
+            }
+
+            var tech = await _dBcontext.TechnicianProfileCopies
+                .FirstOrDefaultAsync(e => e.Id == techId);
+
+            if (tech == null)
+            {
+                return null;
+            }
+
+            tech.RevenueShare = revenueShare;
+
+            await _dBcontext.SaveChangesAsync();
+
+            return tech;
+        }
+        public async Task<TechnicianProfileCopy?> UpdateRevenueShare(int techId,decimal revenueShare)
+        {
+            if (revenueShare < 0 || revenueShare > 100)
+            {
+                throw new ArgumentException(
+                    "Revenue share must be between 0 and 100.");
+            }
+
+            var tech = await _dBcontext.TechnicianProfileCopies
+                .FirstOrDefaultAsync(e => e.Id == techId);
+
+            if (tech == null)
+            {
+                return null;
+            }
+
+            tech.RevenueShare = revenueShare;
+
+            await _dBcontext.SaveChangesAsync();
+
+            return tech;
+        }
         public async Task<bool> ApproveTechnicienCreate(int notifId)
         {
             var not =await _dBcontext.Notification
@@ -158,7 +266,7 @@ namespace Hmoe_Maintenance.Services
             }
 
             var tec = await _dBcontext.TechnicianProfiles
-                .Include(e => e.Company)
+                .Include(e => e.CompanyCopy)
                 .FirstOrDefaultAsync(e => e.UserId == not.RelatedEntityId);
 
             if (tec == null)
@@ -169,7 +277,7 @@ namespace Hmoe_Maintenance.Services
             var teccopy = new TechnicianProfileCopy
             {
                 UserId = tec.UserId,
-                CompanyId = tec.CompanyId,
+                CompanyCopyId = tec.CompanyCopyId,
                 NationalId = tec.NationalId,
                 Fullname = tec.Fullname,
                 YearsOfExperience = tec.YearsOfExperience,
@@ -195,11 +303,11 @@ namespace Hmoe_Maintenance.Services
             {
                 UserId = tec.UserId,
                 Title = "Application Approved",
-                Message = $"Congratulations! You have been accepted to join {tec.Company.Name}.",
+                Message = $"Congratulations! You have been accepted to join {tec.CompanyCopy.Name}.",
                 Type = NotificationType.TechnicianApplicationApproved,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                RelatedEntityId = tec.Company.Id.ToString(),
+                RelatedEntityId = tec.CompanyCopy.Id.ToString(),
             };
 
            await _dBcontext.Notification.AddAsync(notifyCompany);
@@ -219,7 +327,7 @@ namespace Hmoe_Maintenance.Services
             }
 
             var tec = await _dBcontext.TechnicianProfiles
-                .Include(e => e.Company)
+                .Include(e => e.CompanyCopy)
                 .FirstOrDefaultAsync(e => e.UserId == not.RelatedEntityId);
 
             if (tec == null)
@@ -234,11 +342,11 @@ namespace Hmoe_Maintenance.Services
             {
                 UserId = tec.UserId,
                 Title = "Application Rejected",
-                Message = $"We are sorry. Your application to join {tec.Company.Name} has been rejected.",
+                Message = $"We are sorry. Your application to join {tec.CompanyCopy.Name} has been rejected.",
                 Type = NotificationType.TechnicianApplicationRejected,
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow,
-                RelatedEntityId = tec.Company.Id.ToString(),
+                RelatedEntityId = tec.CompanyCopy.Id.ToString(),
             };
 
             _dBcontext.Notification.Add(notifyTechnician);
@@ -273,7 +381,7 @@ namespace Hmoe_Maintenance.Services
             technicianCopy.NationalId = technician.NationalId;
             technicianCopy.Bio = technician.Bio;
             technicianCopy.YearsOfExperience = technician.YearsOfExperience;
-            technicianCopy.CompanyId = technician.CompanyId;
+            technicianCopy.CompanyCopyId = technician.CompanyCopyId;
             technicianCopy.IsActive = technician.IsActive;
             technicianCopy.AverageRating = technician.AverageRating;
             technicianCopy.RevenueShare = technician.RevenueShare;
@@ -351,8 +459,41 @@ namespace Hmoe_Maintenance.Services
             await _dBcontext.SaveChangesAsync();
             return true;
         }
+        public async Task<TechnicianPayout?> TechnicianPayout(string nationalId,string notes)
+        {
+            var tech = await _dBcontext.TechnicianProfileCopies
+                .FirstOrDefaultAsync(e => e.NationalId == nationalId);
 
+            if (tech == null)
+            {
+                return null;
+            }
 
+            if (tech.TotalAmount <= 0)
+            {
+                throw new InvalidOperationException(
+                    "Technician has no amount to payout.");
+            }
+
+            var amount = tech.TotalAmount;
+
+            var techPayout = new TechnicianPayout
+            {
+                Amount = amount,
+                TechnicianProfileCopyId = tech.Id,
+                Notes = notes,
+                PayoutDate = DateTime.UtcNow
+            };
+
+            await _dBcontext.technicianPayouts.AddAsync(techPayout);
+
+            // بعد ما تتأكد إن التحويل تم
+            tech.TotalAmount = 0;
+
+            await _dBcontext.SaveChangesAsync();
+
+            return techPayout;
+        }
 
     }
 }

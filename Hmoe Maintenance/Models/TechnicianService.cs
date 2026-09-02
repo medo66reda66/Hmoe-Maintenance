@@ -7,9 +7,10 @@
 
             public int TechnicianProfileId { get; set; }
             public TechnicianProfile? TechnicianProfile { get; set; } = default!;
-
             public int ServiceCategoryId { get; set; }
             public ServiceCategory? ServiceCategory { get; set; } = default!;
+
+          
         
     }
 }

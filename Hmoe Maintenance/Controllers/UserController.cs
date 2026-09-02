@@ -1,4 +1,4 @@
-﻿using Ecommers.Api.Utilities;
+using Ecommers.Api.Utilities;
 using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +26,7 @@ namespace Hmoe_Maintenance.Controllers
         {
             var result = await _lockunlockUserService.Index(filter, page);
 
-            if (result == null)
+            if (result.Datarequest == null)
                 return NotFound();
 
             return Ok(result);

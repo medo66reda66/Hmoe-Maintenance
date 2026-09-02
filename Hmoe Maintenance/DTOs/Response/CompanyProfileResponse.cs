@@ -1,4 +1,6 @@
-﻿namespace Hmoe_Maintenance.DTOs.Response
+﻿using Hmoe_Maintenance.Models;
+
+namespace Hmoe_Maintenance.DTOs.Response
 {
     public class CompanyProfileResponse
     {
@@ -17,9 +19,9 @@
 
         public bool IsActive { get; set; }
 
-        public List<TechnicianincompanyProfileResponse> Technicians { get; set; } = new List<TechnicianincompanyProfileResponse>();
-        public List<CompanyCoverageAreaProfileResponse> CoverageAreas { get; set; } = new List<CompanyCoverageAreaProfileResponse>();
+        public List<TechnicianincompanyProfileResponse>? Technicians { get; set; } = new List<TechnicianincompanyProfileResponse>();
+        public List<CompanyCoverageAreaProfileResponse>? CoverageAreas { get; set; } = new List<CompanyCoverageAreaProfileResponse>();
 
-
+        public List<CompanyServiceResponse>? companyServices { get; set; }
     }
 }

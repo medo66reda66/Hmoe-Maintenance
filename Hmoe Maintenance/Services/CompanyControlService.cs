@@ -25,7 +25,7 @@ namespace Hmoe_Maintenance.Services
             _notificationService = notificationService;
         }
 
-        public async Task<PaginationResponse<Notification>> GetAllNotificationToCompany(string userid,FilternotificationRequest filternotification,int page)
+        public async Task<PaginationResponse<Notification,FilternotificationRespons>> GetAllNotificationToCompany(string userid,FilternotificationRequest filternotification,int page)
         {
             var notification =  _Context.Notification.Where(e=>e.UserId == userid)
                 .OrderByDescending(e=>e.CreatedAt)
@@ -52,7 +52,7 @@ namespace Hmoe_Maintenance.Services
                 filternotificationRespons.Isread = filternotification.IsRead.Value;
             }
 
-            var Result = await PaginationService.PaginateAsync(notification, page, 5);
+            var Result = await PaginationService.PaginateAsync(notification, page,filternotificationRespons, 5);
 
             return Result;
         }
@@ -68,9 +68,9 @@ namespace Hmoe_Maintenance.Services
         }
 
 
-        public async Task<PaginationResponse<PaymentResponse>> GetAllPaymentbyClient(string comid ,FilterclientRequest filter,int page)
+        public async Task<PaginationResponse<PaymentResponse,FilterclientResponse>> GetAllPaymentbyClient(string comid ,FilterclientRequest filter,int page)
         {
-            var payment =  _Context.Payment.Where(e=>e.MaintenanceRequest.Company.ApplicationUserId == comid )
+            var payment =  _Context.Payment.Where(e=>e.MaintenanceRequest.CompanyCopy.ApplicationUserId == comid )
                 .Include(e => e.MaintenanceRequest).ThenInclude(e=>e.Customer).AsNoTracking().AsQueryable();
 
             var showPayments = payment.Select(e => new PaymentResponse
@@ -154,7 +154,7 @@ namespace Hmoe_Maintenance.Services
                 filterResponse.PaymentMethod = filter.PaymentMethod.Value;
             }
 
-            var result =await PaginationService.PaginateAsync(showPayments, page, 5);
+            var result =await PaginationService.PaginateAsync(showPayments, page, filterResponse, 5);
 
             return result;
         }
@@ -170,7 +170,7 @@ namespace Hmoe_Maintenance.Services
 
             var requestman = await _Context.MaintenanceRequests
                 .Include(e => e.Customer)
-                .Include(e => e.Company)
+                .Include(e => e.CompanyCopy)
                 .FirstOrDefaultAsync(e => e.RequestNumber == notification.RelatedEntityId );
 
             if (requestman == null)
@@ -183,11 +183,11 @@ namespace Hmoe_Maintenance.Services
             var notif = new Notification
             {
                 UserId = requestman.CustomerId,
-                Title = $"Request Accepted from: {requestman.Company.Name}",
+                Title = $"Request Accepted from: {requestman.CompanyCopy.Name}",
                 Message = $"Your maintenance request ({requestman.RequestNumber}) has been accepted. A technician will be assigned soon.",
                 Type = NotificationType.CompanyAccepted,
                 IsRead = false,
-                RelatedEntityId = requestman.CompanyId.ToString(),
+                RelatedEntityId = requestman.CompanycopyId.ToString(),
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -212,7 +212,7 @@ namespace Hmoe_Maintenance.Services
 
             var requestman = await _Context.MaintenanceRequests
                 .Include(e => e.Customer)
-                  .Include(e => e.Company)
+                  .Include(e => e.CompanyCopy)
                 .FirstOrDefaultAsync(e => e.RequestNumber == notification.RelatedEntityId);
 
             if (requestman == null)
@@ -226,7 +226,7 @@ namespace Hmoe_Maintenance.Services
             var notif = new Notification
             {
                 UserId = requestman.CustomerId,
-                Title = $"Maintenance Request Rejected from: {requestman.Company.Name}",
+                Title = $"Maintenance Request Rejected from: {requestman.CompanyCopy.Name}",
                 Message = $"Unfortunately, your maintenance request ({requestman.RequestNumber}) has been rejected by the company.",
                 Type = NotificationType.CompanyRejected,
                 IsRead = false,
@@ -252,7 +252,7 @@ namespace Hmoe_Maintenance.Services
 
             var requestman = await _Context.MaintenanceRequests
                 .Include(e => e.Customer)
-                  .Include(e => e.Company)
+                  .Include(e => e.CompanyCopy)
                 .FirstOrDefaultAsync(e => e.RequestNumber == notifation.RelatedEntityId && e.Status == MaintenanceRequestStatus.CompanyAccepted);
 
             if (requestman == null)
@@ -265,7 +265,7 @@ namespace Hmoe_Maintenance.Services
             var notification = new Notification
             {
                 UserId = requestman.CustomerId,
-                Title = $"Price Estimate Ready from: {requestman.Company.Name}",
+                Title = $"Price Estimate Ready from: {requestman.CompanyCopy.Name}",
                 Message = $"Your maintenance request ({requestman.RequestNumber}) has been inspected.\n\n" +
                   $"Inspection Fee: {requestman.InspectionPrice:C}\n" +
                   $"Estimated Repair Cost: {requestman.EstimatedPrice:C}\n" +
@@ -296,7 +296,7 @@ namespace Hmoe_Maintenance.Services
 
             var requestman = await _Context.MaintenanceRequests
                 .Include(e => e.Customer)
-                .Include(e=>e.Company)
+                .Include(e=>e.CompanyCopy)
                 .Include(e => e.ServiceCategory)
                 .Include(e => e.AssignedTechnician)
                 .FirstOrDefaultAsync(e => e.RequestNumber == notifation.RelatedEntityId && e.Status== MaintenanceRequestStatus.clientApproveprice);
@@ -319,7 +319,7 @@ namespace Hmoe_Maintenance.Services
             var noti = new Notification
             {
                 UserId = Techniciancopy.UserId,
-                Title = $"New Maintenance Request Assigned from: {requestman.Company.Name}",
+                Title = $"New Maintenance Request Assigned from: {requestman.CompanyCopy.Name}",
                 Message =
                 $"You have been assigned a new maintenance request.\n\n" +
                 $"Request Number: {requestman.RequestNumber}\n" +

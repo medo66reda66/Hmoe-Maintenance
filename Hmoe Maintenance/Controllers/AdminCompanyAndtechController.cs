@@ -48,7 +48,7 @@ namespace Hmoe_Maintenance.Controllers
             }
 
             var Notificatins =await _adminCompanyService.GetNotification(adminid,filternotification,page);
-            if (Notificatins.Data == null) 
+            if (Notificatins.Datarequest == null) 
             {
                 return BadRequest("Not fount Notificatins ");
             }
@@ -77,7 +77,7 @@ namespace Hmoe_Maintenance.Controllers
         {
             var companies = await _adminCompanyService.GetAllCompany(filtercompany,page);
 
-            if (companies.Data == null || !companies.Data.Any())
+            if (companies.Datarequest == null || !companies.Datarequest.Any())
                 return NotFound("No companies found.");
 
             return Ok(companies);
@@ -99,7 +99,7 @@ namespace Hmoe_Maintenance.Controllers
         {
             var coverageAreas = await _adminCompanyService.GetAllCompanyCoverageAreas(filtercompanyArea,page);
 
-            if (coverageAreas.Data == null || !coverageAreas.Data.Any())
+            if (coverageAreas.Datarequest == null || !coverageAreas.Datarequest.Any())
                 return NotFound("No coverage areas found.");
 
             return Ok(coverageAreas);
@@ -120,7 +120,7 @@ namespace Hmoe_Maintenance.Controllers
         public async Task<IActionResult> GetAllTechnicianProfiles([FromQuery] FilterTechnicianRequest filterTechnician,int page = 1)
         {
             var technicians = await _adminCompanyService.GetAllTechnicianProfiles(filterTechnician,page);
-            if (technicians.Data == null || !technicians.Data.Any())
+            if (technicians.Datarequest == null || !technicians.Datarequest.Any())
                 return NotFound("No technician profiles found.");
             return Ok(technicians);
         }

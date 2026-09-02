@@ -4,6 +4,7 @@
     {
         public int? Id { get; set; }
         public string ServiceName { get; set; } = default!;
+        public int? ServiceId { get; set; }
         public string? ServiceDescription { get; set; }
 
         public string? IconUrl { get; set; }

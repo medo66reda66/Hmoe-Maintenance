@@ -22,7 +22,7 @@ namespace Hmoe_Maintenance.Services
             _notificationService = notificationService;
         }
 
-        public async Task<PaginationResponse<Notification>> GetAllNotificationByTech(string techid,FilternotificationRequest filternotification,int page)
+        public async Task<PaginationResponse<Notification,FilternotificationRespons>> GetAllNotificationByTech(string techid,FilternotificationRequest filternotification,int page)
         {
             var notification = _Context.Notification.Where(e => e.UserId == techid)
                   .OrderByDescending(e => e.CreatedAt)
@@ -48,7 +48,7 @@ namespace Hmoe_Maintenance.Services
                 filternotificationRespons.Isread = filternotification.IsRead.Value;
             }
 
-            var Result = await PaginationService.PaginateAsync(notification, page, 5);
+            var Result = await PaginationService.PaginateAsync(notification, page,filternotificationRespons, 5);
 
             return Result;
 
@@ -525,6 +525,7 @@ namespace Hmoe_Maintenance.Services
         public async Task<bool> Paymentcash(string requestNumber)
         {
             var maintenanceRequest = await _Context.MaintenanceRequests
+                .Include(e=>e.technicianProfileCopy)
                       .FirstOrDefaultAsync(e => e.RequestNumber == requestNumber && e.PaymentApproved == false && e.Status == MaintenanceRequestStatus.WorkCompleted);
 
             if (maintenanceRequest == null)
@@ -535,10 +536,14 @@ namespace Hmoe_Maintenance.Services
             var tatalCost = (maintenanceRequest.FinalPrice + maintenanceRequest.AdditionalCostsTotal);
             maintenanceRequest.PaymentApproved = true;
 
+            var amount = (tatalCost - (tatalCost * (maintenanceRequest.technicianProfileCopy.RevenueShare / 100)));
+
+            maintenanceRequest.technicianProfileCopy.TotalAmount += amount;
+
             var payment = new Payment
             {
                 MaintenanceRequestId = maintenanceRequest.Id,
-                Amount = tatalCost,
+                Amount = (tatalCost+15),
                 PaymentMethod = PaymentMethod.Cash,
                 Status = PaymentStatus.Paid,
                 CreatedAt = DateTime.UtcNow,
@@ -547,7 +552,7 @@ namespace Hmoe_Maintenance.Services
             await _Context.Payment.AddAsync(payment);
             var noti = new Notification
             {
-                UserId = maintenanceRequest.Company.ApplicationUserId,
+                UserId = maintenanceRequest.CompanyCopy.ApplicationUserId,
                 Title = $"Payment Received from: {maintenanceRequest.AssignedTechnician.Fullname}",
                 Message = $"The payment for maintenance request ({maintenanceRequest.RequestNumber}) has been received in cash.",
                 Type = NotificationType.PaymentSuccess,
@@ -555,11 +560,11 @@ namespace Hmoe_Maintenance.Services
                 RelatedEntityId = maintenanceRequest.RequestNumber,
                 CreatedAt = DateTime.UtcNow
             };
+
             await _Context.Notification.AddAsync(noti);
             await _Context.SaveChangesAsync();
             await _notificationService.SendToUserAsync(noti);
             return true;
-
         }
         public async Task<bool> FinallyCompleted(int id)
         {
@@ -572,7 +577,7 @@ namespace Hmoe_Maintenance.Services
             notification.IsRead = true;
             var requestman = await _Context.MaintenanceRequests
                 .Include(e => e.AssignedTechnician)
-                .Include(e=>e.Company)
+                .Include(e=>e.CompanyCopy)
                 .FirstOrDefaultAsync(e =>
                     e.RequestNumber == notification.RelatedEntityId);
             if (requestman == null)
@@ -582,9 +587,10 @@ namespace Hmoe_Maintenance.Services
             requestman.Status = MaintenanceRequestStatus.Completed;
             var tecnician = await _Context.TechnicianProfileCopies.FirstOrDefaultAsync(e => e.Id == requestman.technicianProfileCopyId);
             tecnician.IsActive = true;
+            tecnician.TotalCompletedJobs += 1;
             var noti = new Notification
             {
-                UserId = requestman.Company.ApplicationUserId,
+                UserId = requestman.CompanyCopy.ApplicationUserId,
                 Title = $"Maintenance Completed from: {requestman.AssignedTechnician.Fullname}",
                 Message = $"The maintenance request ({requestman.RequestNumber}) has been marked as completed. and payment done",
                 Type = NotificationType.Completed,

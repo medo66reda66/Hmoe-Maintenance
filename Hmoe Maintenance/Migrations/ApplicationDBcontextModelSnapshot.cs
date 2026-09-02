@@ -552,7 +552,7 @@ namespace Hmoe_Maintenance.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CompanyId")
+                    b.Property<int>("CompanycopyId")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("CompletedAt")
@@ -630,7 +630,7 @@ namespace Hmoe_Maintenance.Migrations
 
                     b.HasIndex("AssignedTechnicianId");
 
-                    b.HasIndex("CompanyId");
+                    b.HasIndex("CompanycopyId");
 
                     b.HasIndex("CustomerId");
 
@@ -816,7 +816,7 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CompanyId")
+                    b.Property<int>("CompanyCopyId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -832,16 +832,16 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TechnicianProfileId")
+                    b.Property<int?>("TechnicianProfileCopyId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId");
+                    b.HasIndex("CompanyCopyId");
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("TechnicianProfileId");
+                    b.HasIndex("TechnicianProfileCopyId");
 
                     b.HasIndex("MaintenanceRequestId", "CustomerId")
                         .IsUnique();
@@ -875,6 +875,33 @@ namespace Hmoe_Maintenance.Migrations
                     b.ToTable("ServiceCategories");
                 });
 
+            modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianPayout", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("PayoutDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("TechnicianProfileCopyId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TechnicianProfileCopyId");
+
+                    b.ToTable("technicianPayouts");
+                });
+
             modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -892,7 +919,7 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<string>("Bio")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CompanyId")
+                    b.Property<int?>("CompanyCopyId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -953,7 +980,7 @@ namespace Hmoe_Maintenance.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId");
+                    b.HasIndex("CompanyCopyId");
 
                     b.HasIndex("UserId");
 
@@ -977,7 +1004,7 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<string>("Bio")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("CompanyId")
+                    b.Property<int?>("CompanyCopyId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1026,6 +1053,9 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<string>("TechnicianDocumentUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("TotalCompletedJobs")
                         .HasColumnType("int");
 
@@ -1038,7 +1068,7 @@ namespace Hmoe_Maintenance.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyId");
+                    b.HasIndex("CompanyCopyId");
 
                     b.HasIndex("UserId");
 
@@ -1056,15 +1086,10 @@ namespace Hmoe_Maintenance.Migrations
                     b.Property<int>("ServiceCategoryId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("TechnicianProfileCopyId")
-                        .HasColumnType("int");
-
                     b.Property<int>("TechnicianProfileId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TechnicianProfileCopyId");
 
                     b.HasIndex("TechnicianProfileId")
                         .IsUnique();
@@ -1349,9 +1374,9 @@ namespace Hmoe_Maintenance.Migrations
                         .WithMany()
                         .HasForeignKey("AssignedTechnicianId");
 
-                    b.HasOne("Hmoe_Maintenance.Models.Company", "Company")
+                    b.HasOne("Hmoe_Maintenance.Models.CompanyCopy", "CompanyCopy")
                         .WithMany()
-                        .HasForeignKey("CompanyId")
+                        .HasForeignKey("CompanycopyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1375,7 +1400,7 @@ namespace Hmoe_Maintenance.Migrations
 
                     b.Navigation("AssignedTechnician");
 
-                    b.Navigation("Company");
+                    b.Navigation("CompanyCopy");
 
                     b.Navigation("Customer");
 
@@ -1446,9 +1471,9 @@ namespace Hmoe_Maintenance.Migrations
 
             modelBuilder.Entity("Hmoe_Maintenance.Models.Review", b =>
                 {
-                    b.HasOne("Hmoe_Maintenance.Models.Company", "Company")
+                    b.HasOne("Hmoe_Maintenance.Models.CompanyCopy", "companyCopy")
                         .WithMany()
-                        .HasForeignKey("CompanyId")
+                        .HasForeignKey("CompanyCopyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1464,26 +1489,35 @@ namespace Hmoe_Maintenance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Hmoe_Maintenance.Models.TechnicianProfile", "TechnicianProfile")
+                    b.HasOne("Hmoe_Maintenance.Models.TechnicianProfileCopy", "technicianProfileCopy")
                         .WithMany()
-                        .HasForeignKey("TechnicianProfileId");
-
-                    b.Navigation("Company");
+                        .HasForeignKey("TechnicianProfileCopyId");
 
                     b.Navigation("Customer");
 
                     b.Navigation("MaintenanceRequest");
 
-                    b.Navigation("TechnicianProfile");
+                    b.Navigation("companyCopy");
+
+                    b.Navigation("technicianProfileCopy");
+                });
+
+            modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianPayout", b =>
+                {
+                    b.HasOne("Hmoe_Maintenance.Models.TechnicianProfileCopy", "TechnicianProfileCopy")
+                        .WithMany()
+                        .HasForeignKey("TechnicianProfileCopyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TechnicianProfileCopy");
                 });
 
             modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianProfile", b =>
                 {
-                    b.HasOne("Hmoe_Maintenance.Models.Company", "Company")
+                    b.HasOne("Hmoe_Maintenance.Models.CompanyCopy", "CompanyCopy")
                         .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CompanyCopyId");
 
                     b.HasOne("Hmoe_Maintenance.Models.ApplicationUser", "User")
                         .WithMany()
@@ -1491,18 +1525,16 @@ namespace Hmoe_Maintenance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Company");
+                    b.Navigation("CompanyCopy");
 
                     b.Navigation("User");
                 });
 
             modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianProfileCopy", b =>
                 {
-                    b.HasOne("Hmoe_Maintenance.Models.Company", "Company")
+                    b.HasOne("Hmoe_Maintenance.Models.CompanyCopy", "CompanyCopy")
                         .WithMany()
-                        .HasForeignKey("CompanyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CompanyCopyId");
 
                     b.HasOne("Hmoe_Maintenance.Models.ApplicationUser", "User")
                         .WithMany()
@@ -1510,7 +1542,7 @@ namespace Hmoe_Maintenance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Company");
+                    b.Navigation("CompanyCopy");
 
                     b.Navigation("User");
                 });
@@ -1522,10 +1554,6 @@ namespace Hmoe_Maintenance.Migrations
                         .HasForeignKey("ServiceCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("Hmoe_Maintenance.Models.TechnicianProfileCopy", null)
-                        .WithMany("TechnicianServices")
-                        .HasForeignKey("TechnicianProfileCopyId");
 
                     b.HasOne("Hmoe_Maintenance.Models.TechnicianProfile", "TechnicianProfile")
                         .WithMany("TechnicianServices")
@@ -1615,11 +1643,6 @@ namespace Hmoe_Maintenance.Migrations
                 });
 
             modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianProfile", b =>
-                {
-                    b.Navigation("TechnicianServices");
-                });
-
-            modelBuilder.Entity("Hmoe_Maintenance.Models.TechnicianProfileCopy", b =>
                 {
                     b.Navigation("TechnicianServices");
                 });

@@ -42,7 +42,7 @@ namespace Hmoe_Maintenance.Services
             return notification;
         }
 
-        public async Task<PaginationResponse<Notification>>? GetNotification(string adminid,FilternotificationRequest filternotification,int page)
+        public async Task<PaginationResponse<Notification,FilternotificationRespons>> GetNotification(string adminid,FilternotificationRequest filternotification,int page)
         {
             var notification =  _dBcontext.Notification
                 .Where(n => n.UserId == adminid)
@@ -67,7 +67,7 @@ namespace Hmoe_Maintenance.Services
                 filternotificationRespons.Isread = filternotification.IsRead.Value;
             }
 
-           var Result = await PaginationService.PaginateAsync(notification, page,5);
+           var Result = await PaginationService.PaginateAsync(notification, page, filternotificationRespons, 5);
 
           return Result;
         }
@@ -79,7 +79,7 @@ namespace Hmoe_Maintenance.Services
             return notification;
         }
 
-        public async Task<PaginationResponse<Company>> GetAllCompany(FiltercompanyReqest filtercompany,int page)
+        public async Task<PaginationResponse<Company,FiltercompanyResponse>> GetAllCompany(FiltercompanyReqest filtercompany,int page)
         {
             var companies =  _dBcontext.Companies
                 .Include(w=>w.applicationUser)
@@ -114,11 +114,7 @@ namespace Hmoe_Maintenance.Services
                 filtercompanyResponse.isActive = filtercompany.isactive.Value;
             }
 
-            //var totalpage = Math.Ceiling(companies.Count() / 5.0);
-            //companies = companies.Skip((page-1) * 5).Take(5).ToList();
-            //var currentpage = page;
-
-            var Result =await PaginationService.PaginateAsync(companies, page, 5);
+            var Result =await PaginationService.PaginateAsync(companies, page,filtercompanyResponse, 5);
 
             return Result;
         }
@@ -132,7 +128,7 @@ namespace Hmoe_Maintenance.Services
             return company;
         }
 
-        public async Task<PaginationResponse<CompanyAreaResponse>> GetAllCompanyCoverageAreas(FiltercompanyReqest filtercompany,int page)
+        public async Task<PaginationResponse<CompanyAreaResponse,FiltercompanyResponse>> GetAllCompanyCoverageAreas(FiltercompanyReqest filtercompany,int page)
         {
             var coverageAreas =  _dBcontext.CompanyCoverageAreas
                 .Include(e => e.Company)
@@ -151,7 +147,10 @@ namespace Hmoe_Maintenance.Services
                 companyOwnerName = c.Company.applicationUser.FullName,
                 DiscriptionCompany = c.Company.Description,
                 phoneNumberCompany = c.Company.PhoneNumber,
-                EmailCompany = c.Company.Email!
+                EmailCompany = c.Company.Email!,
+              
+                logourl = c.Company.LogoUrl,
+                
             });
 
             FiltercompanyResponse filtercompanyResponse = new FiltercompanyResponse();
@@ -181,7 +180,7 @@ namespace Hmoe_Maintenance.Services
                 filtercompanyResponse.IsActiveArea = filtercompany.IsActiveArea.Value;
             }
 
-            var Result = await PaginationService.PaginateAsync(showCompanyAreas, page, 5);
+            var Result = await PaginationService.PaginateAsync(showCompanyAreas, page,filtercompanyResponse, 5);
 
             return Result;
         }
@@ -204,19 +203,23 @@ namespace Hmoe_Maintenance.Services
                companyOwnerName = c.Company.applicationUser.FullName,
                DiscriptionCompany = c.Company.Description,
                phoneNumberCompany = c.Company.PhoneNumber,
-               EmailCompany = c.Company.Email!
+               EmailCompany = c.Company.Email!,
+               CommercialRegistrationNumber = c.Company.CommercialRegistrationNumber,
+               CommercialRegistrationImageUrl = c.Company.CommercialRegistrationImageUrl,
+               logourl = c.Company.LogoUrl,
+               LicenseImageUrl = c.Company.LicenseImageUrl,
            }).ToListAsync();
 
             return showCompanyAreas;
         }
 
-        public async Task<PaginationResponse<ShowTechnicianServiceResponse>> GetAllTechnicianProfiles(FilterTechnicianRequest filter,int page)
+        public async Task<PaginationResponse<ShowTechnicianServiceResponse, FilterTechnicianResponse>> GetAllTechnicianProfiles(FilterTechnicianRequest filter,int page)
         {
-            var technicianProfiles = _dBcontext.TechnicianProfileCopies
+            var technicianProfiles = _dBcontext.TechnicianProfiles
                 .Include(t => t.User)
-                .Include(t => t.Company)
-                .Include(t => t.TechnicianServices)
-                .ThenInclude(ts => ts.ServiceCategory)
+                .Include(t => t.CompanyCopy)
+                .Include(e=>e.TechnicianServices)
+                    .ThenInclude(e=>e.ServiceCategory)
                 .AsNoTracking();
 
             var showTechnicianProfiles =  technicianProfiles.Select(t => new ShowTechnicianServiceResponse
@@ -226,19 +229,18 @@ namespace Hmoe_Maintenance.Services
                 Fullnametechnicia = t.Fullname,
                 PhoneNumper = t.PhoneNumper,
                 NationalIdtec = t.NationalId,
-                ApprovedByUserId = t.ApprovedByUserId,
                 Bio = t.Bio,
-                tecnicalservice = t.TechnicianServices.Select(ts => ts.ServiceCategory.Name).FirstOrDefault() ?? string.Empty,
-                AverageRating = t.AverageRating,
-                RevenueShare = t.RevenueShare,
-                TotalCompletedJobs = t.TotalCompletedJobs,
-                Descriptionservicecategory = t.TechnicianServices.Select(ts => ts.ServiceCategory.Description).FirstOrDefault() ?? string.Empty,
-                CompanyName = t.Company.Name,
-                DescriptionCompany = t.Company.Description,
-                EmailCompany = t.Company.Email,
+                Profileurl = t.ProfileImageUrl,
+                servicecategory = t.TechnicianServices.Select(ts => new Models.ServiceCategory
+                {
+                    Description = ts.ServiceCategory.Description,
+                    Name = ts.ServiceCategory.Name,
+                    IsActive = ts.ServiceCategory.IsActive,
+                    IconUrl = ts.ServiceCategory.IconUrl,
+                }),
+                CompanyName = t.CompanyCopy.Name,
                 IsAvailable = t.IsAvailable,
                 IsActive = t.IsActive,
-                CreatedAt = t.CreatedAt
             });
 
             FilterTechnicianResponse filterResponse = new();
@@ -288,11 +290,11 @@ namespace Hmoe_Maintenance.Services
                 if (filter.TechnicalService != null)
                 {
                     showTechnicianProfiles = showTechnicianProfiles
-                        .Where(t => t.tecnicalservice.Contains(filter.TechnicalService));
+                        .Where(t => t.servicecategory.Select(e=>e.Name).Contains(filter.TechnicalService));
                     filterResponse.TechnicalService = filter.TechnicalService;
                 }
 
-                var Result = await PaginationService.PaginateAsync(showTechnicianProfiles, page, 5);
+                var Result = await PaginationService.PaginateAsync(showTechnicianProfiles, page,filterResponse, 5);
 
                 return Result;
         }
@@ -301,7 +303,7 @@ namespace Hmoe_Maintenance.Services
         {
             var technicianProfile = await _dBcontext.TechnicianProfiles
                 .Include(t => t.User)
-                .Include(t => t.Company)
+                .Include(t => t.CompanyCopy)
                 .Include(t => t.TechnicianServices)
                 .ThenInclude(ts => ts.ServiceCategory)
                 .FirstOrDefaultAsync(t => t.Id == id);
@@ -315,14 +317,22 @@ namespace Hmoe_Maintenance.Services
                 NationalIdtec = technicianProfile.NationalId,
                 ApprovedByUserId = technicianProfile.ApprovedByUserId,
                 Bio = technicianProfile.Bio,
-                tecnicalservice = technicianProfile.TechnicianServices.Select(ts => ts.ServiceCategory.Name).FirstOrDefault() ?? string.Empty,
                 AverageRating = technicianProfile.AverageRating,
                 RevenueShare = technicianProfile.RevenueShare,
                 TotalCompletedJobs = technicianProfile.TotalCompletedJobs,
-                Descriptionservicecategory = technicianProfile.TechnicianServices.Select(ts => ts.ServiceCategory.Description).FirstOrDefault() ?? string.Empty,
-                CompanyName = technicianProfile.Company.Name,
-                DescriptionCompany = technicianProfile.Company.Description,
-                EmailCompany = technicianProfile.Company.Email,
+                BackUrl = technicianProfile.NationalIdBackImageUrl,
+                FrontUrl = technicianProfile.NationalIdFrontImageUrl,
+                TechnicianDocumentUrl = technicianProfile.TechnicianDocumentUrl,
+                servicecategory = technicianProfile.TechnicianServices.Select(ts => new Models.ServiceCategory
+                {
+                    Description = ts.ServiceCategory.Description,
+                    Name = ts.ServiceCategory.Name,
+                    IsActive = ts.ServiceCategory.IsActive,
+                    IconUrl = ts.ServiceCategory.IconUrl,
+                }),
+                CompanyName = technicianProfile.CompanyCopy.Name,
+                DescriptionCompany = technicianProfile.CompanyCopy.Description,
+                EmailCompany = technicianProfile.CompanyCopy.Email,
                 IsAvailable = technicianProfile.IsAvailable,
                 IsActive = technicianProfile.IsActive,
                 CreatedAt = technicianProfile.CreatedAt

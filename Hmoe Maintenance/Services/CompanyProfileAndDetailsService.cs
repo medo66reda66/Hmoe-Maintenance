@@ -18,7 +18,7 @@ namespace Hmoe_Maintenance.Services
             _context = context;
         }
 
-        public async Task<PaginationResponse<ServiceCategory>> GetAllServiceCategories(FilterServiceCategoryRequest filter,int page)
+        public async Task<PaginationResponse<ServiceCategory,FilterServiceCategoryResponse>> GetAllServiceCategories(FilterServiceCategoryRequest filter,int page)
         {
             var serviceCategories =  _context.ServiceCategories
                 .AsNoTracking();
@@ -41,43 +41,60 @@ namespace Hmoe_Maintenance.Services
                 filterResponse.IsActive = filter.IsActive.Value;
             }
 
-            var result =await PaginationService.PaginateAsync(serviceCategories, page, 10);
+            var result =await PaginationService.PaginateAsync(serviceCategories, page, filterResponse, 10);
 
             return result;
         }
-        public async Task<CompanyProfileResponse> GetCompanyProfileAndDetailsServiceById(int companyId)
+        public async Task<CompanyProfileResponse> GetCompanyProfileAndDetailsServiceById(int companyCopyId)
         {
-            var company = await _context.Companies
-                .FirstOrDefaultAsync(P=>P.Id == companyId);
+            var companyCopy = await _context.companyCopies
+                .FirstOrDefaultAsync(P=>P.Id == companyCopyId);
+            if(companyCopy == null)
+            {
+                return null;
+            }
+
+            var company =await _context.Companies.FirstOrDefaultAsync(e => e.ApplicationUserId == companyCopy.ApplicationUserId);
 
             var techs = _context.TechnicianProfileCopies
                 .Include(s=>s.User)
                 .AsQueryable()
                 .AsNoTracking()
-                .Where(t => t.CompanyId == companyId);
+                .Where(t => t.CompanyCopyId == companyCopyId);
+            if (!techs.Any())
+            {
+                return null;
+            }
 
-            var camparea = _context.CompanyCoverageAreas
+            var comparea = _context.CompanyCoverageAreas
                 .AsNoTracking()
                 .AsQueryable()
-                .Where(c => c.CompanyId == companyId);
+                .Where(c => c.CompanyId == company.Id);
+            if (!comparea.Any())
+            {
+                return null;
+            }
 
             var services = _context.CompanyServices
                 .Include(s => s.ServiceCategory)
                 .AsNoTracking()
                 .AsQueryable()
-                .Where(c => c.CompanyId == companyId);
+                .Where(c => c.CompanyId == company.Id);
+            if (!services.Any())
+            {
+                return null;
+            }
 
             var showCompanyProfileAndDetailsService = new CompanyProfileResponse
             {
-                Name = company.Name,
-                Description = company.Description,
-                LogoUrl = company.LogoUrl,
-                PhoneNumber = company.PhoneNumber,
-                Email = company.Email,
-                AverageRating = company.AverageRating,
-                TotalReviews = company.TotalReviews,
+                Name = companyCopy.Name,
+                Description = companyCopy.Description,
+                LogoUrl = companyCopy.LogoUrl,
+                PhoneNumber = companyCopy.PhoneNumber,
+                Email = companyCopy.Email,
+                AverageRating = companyCopy.AverageRating,
                 TechnicianCount = await techs.CountAsync(),
-                CompletedRequestsCount = company.CompletedRequestsCount,
+                CompletedRequestsCount = companyCopy.CompletedRequestsCount,
                 Technicians = await techs.Select(t => new TechnicianincompanyProfileResponse
                 {
                     Id = t.Id,
@@ -85,14 +102,12 @@ namespace Hmoe_Maintenance.Services
                     Email = t.User.Email,
                     PhoneNumber = t.PhoneNumper,
                     AverageRating = t.AverageRating,
-                    revenueShare = t.RevenueShare,
                     TotalCompletedJobs = t.TotalCompletedJobs,
                     Bio = t.Bio,
                     YearsOfExperience = t.YearsOfExperience,
-                    IsActive= t.IsActive,
-                    IsAvailable = t.IsAvailable,
+                    IsActive = t.IsActive,
                 }).ToListAsync(),
-                CoverageAreas = await camparea.Select(c => new CompanyCoverageAreaProfileResponse
+                CoverageAreas = await comparea.Select(c => new CompanyCoverageAreaProfileResponse
                 {
                     Id = c.Id,
                     Governorate = c.Governorate,
@@ -100,15 +115,24 @@ namespace Hmoe_Maintenance.Services
                     Area = c.Area,
                     IsActive = c.IsActive
                 }).ToListAsync(),
+                companyServices =await services.Select(e => new CompanyServiceResponse
+                {
+                    ServiceCategoryName = e.ServiceCategory.Name,
+                    InspectionPrice = e.InspectionPrice,
+                    StartingPrice = e.StartingPrice,
+                    IsActive = e.IsActive,
+                    Description = e.Description,
+                }).ToListAsync()
             };
 
             return showCompanyProfileAndDetailsService;
         }
-        public async Task<PaginationResponse<CompanyProfileResponse>> AllCompanyProfileAndDetailsService(int serviceid,FilterCompanyProfileRequest filter,int page)
+        public async Task<PaginationResponse<CompanyProfileResponse,FilterCompanyProfileResponse>> AllCompanyProfileAndDetailsService(int serviceid,FilterCompanyProfileRequest filter,int page)
         {
             var company =  _context.CompanyServices.Where(s => s.ServiceCategoryId == serviceid)
                 .Include(e=>e.Company)
               .AsNoTracking();
+
 
             var showCompanyProfileAndDetailsService = company.Select(company=> new CompanyProfileResponse
             {
@@ -120,16 +144,7 @@ namespace Hmoe_Maintenance.Services
                 AverageRating = company.Company.AverageRating,
                 TotalReviews = company.Company.TotalReviews,
                 CompletedRequestsCount = company.Company.CompletedRequestsCount,
-                IsActive = company.Company.IsActive,
-                CoverageAreas = company.Company.CompanyCoverageAreas.Select(c => new CompanyCoverageAreaProfileResponse
-                {
-                    Id = c.Id,
-                    Governorate = c.Governorate,
-                    City = c.City,
-                    Area = c.Area,
-                    IsActive = c.IsActive
-                })
-               .ToList()
+                IsActive = company.Company.IsActive
             });
 
             FilterCompanyProfileResponse filterResponse = new();
@@ -168,10 +183,31 @@ namespace Hmoe_Maintenance.Services
                 filterResponse.IsActive = filter.IsActive.Value;
             }
 
-            var result =await PaginationService.PaginateAsync(showCompanyProfileAndDetailsService, page, 10);
+            var result =await PaginationService.PaginateAsync(showCompanyProfileAndDetailsService, page, filterResponse, 10);
             return result;
         }
 
+        public async Task<List<ToptencompanyResponse>> Gettoptencompany()
+        {
+            var topCompany = await _context.companyCopies
+                .OrderByDescending(e => e.AverageRating)
+                .Skip(0)
+                .Take(10)
+                .Select(e => new ToptencompanyResponse
+                {
+                   Name = e.Name,
+                   Avrgage =  e.AverageRating,
+                   Logourl = e.LogoUrl
+                })
+                .ToListAsync();
+
+            if(topCompany == null)
+            {
+                return null;
+            }
+
+            return topCompany;
+        }
         
     }
 }

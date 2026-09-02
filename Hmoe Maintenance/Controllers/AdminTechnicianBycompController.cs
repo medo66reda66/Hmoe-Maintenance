@@ -1,5 +1,6 @@
 ﻿using Ecommers.Api.Utilities;
 using Hmoe_Maintenance.DTOs.Request.filter;
+using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -30,7 +31,7 @@ namespace Hmoe_Maintenance.Controllers
                 return BadRequest("user not found");
             }
             var technicians = await _adminTechnicianService.GetAllTechnicianProfiles(compid, technicianRequest , page);
-            if (technicians.Data == null || !technicians.Data.Any())
+            if (technicians.Datarequest == null || !technicians.Datarequest.Any())
             {
                 return NotFound("No technician profiles found.");
             }
@@ -51,6 +52,26 @@ namespace Hmoe_Maintenance.Controllers
                 return NotFound($"Technician profile with ID {id} not found.");
             }
             return Ok(technician);
+        }
+
+        [HttpGet("GetTechPayout")]
+        public async Task<IActionResult> GetTechPayout([FromQuery] FilterTechPayoutRequest filter,int page = 1)
+        {
+                var compid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                if (compid == null)
+                {
+                     return Unauthorized("User not found");
+                }
+
+                var result = await _adminTechnicianService.GetTechpayout(compid,filter,page);
+
+                if (result.Datarequest == null)
+                {
+                     return NotFound("No technician payouts found");
+                }
+
+             return Ok(result);
         }
 
         [HttpPost("ApproveTechnicianCreate/{notifId}")]
@@ -105,6 +126,21 @@ namespace Hmoe_Maintenance.Controllers
                 return NotFound();
 
             return RedirectToAction("GetAllTechnicianProfiles", "AdminTechnicianBycomp");
+        }
+
+        [HttpPost("TechnicianPayout/{nationalId}")]
+        public async Task<IActionResult> TechnicianPayout(string nationalId,string notes)
+        {
+            var payout = await _adminTechnicianService.TechnicianPayout(
+                nationalId,
+                notes);
+
+            if (payout == null)
+            {
+                return NotFound("Technician not found.");
+            }
+
+            return Ok(payout);
         }
 
     }

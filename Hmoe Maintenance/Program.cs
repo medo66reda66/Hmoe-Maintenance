@@ -12,12 +12,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Hmoe_Maintenance
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
          {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -93,10 +94,20 @@ namespace Hmoe_Maintenance
 
           
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
             var app = builder.Build();
             var scope = app.Services.CreateScope();
             var service = scope.ServiceProvider.GetService<IDBIntializer>();
-            service!.Intialize();
+            await service!.Intialize();
 
            
             // Configure the HTTP request pipeline.
@@ -107,6 +118,7 @@ namespace Hmoe_Maintenance
             }
             
             app.UseHttpsRedirection();
+            app.UseCors("AllowAll");
 
             app.UseAuthentication();
             app.UseStaticFiles();

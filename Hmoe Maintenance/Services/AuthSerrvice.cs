@@ -224,7 +224,12 @@ namespace Hmoe_Maintenance.Services
                 Token = token, 
                 Validtoken = "10 minutes" };
         }
-        
+
+        public async Task Logout()
+        {
+            await _signInManager.SignOutAsync();
+        }
+
 
     }
 

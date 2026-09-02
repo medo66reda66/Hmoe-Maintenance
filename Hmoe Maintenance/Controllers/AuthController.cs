@@ -178,9 +178,9 @@ namespace Hmoe_Maintenance.Controllers
 
             return Ok(new
             {
-                TOKEN = accessToken,
+                TOKEN = newAccessToken,
                 Validto = "5 minutes",
-                RefreshToken = refreshToken,
+                RefreshToken = newRefreshToken,
                 Message = "Login successful."
             });
         }
@@ -194,6 +194,14 @@ namespace Hmoe_Maintenance.Controllers
             user.RefreshToken = null;
             await _userManager.UpdateAsync(user);
             return NoContent();
+        }
+
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await _authService.Logout();
+
+            return Ok("Logged out successfully");
         }
 
     }

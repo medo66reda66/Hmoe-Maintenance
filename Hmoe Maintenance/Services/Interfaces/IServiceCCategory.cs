@@ -7,7 +7,7 @@ namespace Hmoe_Maintenance.Services.Interfaces
 {
     public interface IServiceCCategory
     {
-       
+        Task<List<Models.ServiceCategory>> GetServiceCategory();
         Task<ServiceCategory> CreateServiceCategory(string comid, CreateServiceCategoryRequest createServiceCategoryRequest);
         Task<ServiceCategory> UpdateServiceCategory(int id, UpdateServiceCategoryRequest updateServiceCategoryRequest);
         Task<bool> DeleteServiceCategory(int id);

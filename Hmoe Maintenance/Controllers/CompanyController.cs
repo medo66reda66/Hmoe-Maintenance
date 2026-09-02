@@ -35,7 +35,7 @@ namespace Hmoe_Maintenance.Controllers
                 return BadRequest("user not found");
             }
             var allnotifications = await _companyControlService.GetAllNotificationToCompany(userid,filternotification,page);
-            if (allnotifications == null)
+            if (allnotifications.Datarequest == null)
             {
                 return BadRequest("No Notificcatin");
             }
@@ -80,7 +80,7 @@ namespace Hmoe_Maintenance.Controllers
 
         [HttpPost("create")]
         [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
-        public async Task<IActionResult> CreateCompany(CreateCompanyRequest companyRequest,CreateCompanyCoverageAreaRequest createCompanyCoverageArea)
+        public async Task<IActionResult> CreateCompany(CreateCompanyRequest companyRequest,[FromQuery]CreateCompanyCoverageAreaRequest createCompanyCoverageArea)
         {
             var userid = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userid == null)
@@ -132,7 +132,7 @@ namespace Hmoe_Maintenance.Controllers
             }
 
             var payment =await _companyControlService.GetAllPaymentbyClient(compid,filterclient,page);
-            if (payment == null)
+            if (payment.Datarequest == null)
             {
                 return BadRequest("No Payment");
             }

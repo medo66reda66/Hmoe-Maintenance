@@ -12,7 +12,6 @@ namespace Hmoe_Maintenance.SignalRWebAPI
         }
         public async Task SendToUserAsync(Notification notification)
         {
-            Console.WriteLine($"Sending notification to user: {notification.UserId}");
 
             await _hubContext.Clients.Group($"user-{notification.UserId}")
                   .SendAsync("ReceiveNotification", notification);

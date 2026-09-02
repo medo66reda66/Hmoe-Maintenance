@@ -1,5 +1,6 @@
 ﻿using Ecommers.Api.Utilities;
 using Hmoe_Maintenance.DTOs.Request;
+using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -19,9 +20,9 @@ namespace Hmoe_Maintenance.Controllers
             _technicianProfileService = technicianProfileService;
         }
 
-        [HttpGet("GetMyTechnicianById/{id}")]
+        [HttpGet("GetMyTechnicianBy")]
         [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
-        public async Task<IActionResult> GetMTechnicianById()
+        public async Task<IActionResult> GetMyTechnicianBy()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (userId == null)
@@ -35,6 +36,19 @@ namespace Hmoe_Maintenance.Controllers
             }
             return Ok(technician);
         }
+
+        [HttpGet("GetReviews/{techid}")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE},{DS.TECHNICAL_ROLE}"))]
+        public async Task<IActionResult> GetReviews(int techid ,[FromQuery]FilterReviewRequest filter)
+        {
+            var result = _technicianProfileService.GetReviews(techid, filter);
+            if (result == null)
+            {
+                return BadRequest();
+            }
+            return Ok();
+        }
+
         [HttpPost("create")]
         [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.TECHNICAL_ROLE}"))]
         public async Task<IActionResult> CreateTechnician( CreateTechnicianProfileRequest request)

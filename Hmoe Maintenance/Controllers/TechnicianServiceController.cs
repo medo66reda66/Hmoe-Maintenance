@@ -27,6 +27,10 @@ namespace Hmoe_Maintenance.Controllers
         public async Task<IActionResult> GetAllTechnicianService([FromQuery]FilterTechnicianServiceRequest filterTechnicianService,int page =1)
         {
             var result = await _technicianService.GetAllTechnicianService(filterTechnicianService,page);
+            if(result.Datarequest == null)
+            {
+                return BadRequest();
+            }
 
             return Ok(result);
         }

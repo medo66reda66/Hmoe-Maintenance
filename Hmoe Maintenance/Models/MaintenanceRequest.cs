@@ -28,8 +28,8 @@
         public string CustomerId { get; set; } = default!;
         public ApplicationUser Customer { get; set; } = default!;
         // الشركة والخدمة
-        public int CompanyId { get; set; }
-        public Company Company { get; set; } = default!;
+        public int CompanycopyId { get; set; }
+        public CompanyCopy? CompanyCopy { get; set; }= default!;
         public int ServiceCategoryId { get; set; }
         public ServiceCategory ServiceCategory { get; set; } = default!;
         // مكان الصيانة
@@ -50,7 +50,7 @@
         // الفني المعيّن
         public int? AssignedTechnicianId { get; set; }
         public TechnicianProfile? AssignedTechnician { get; set; }
-        public int? technicianProfileCopyId { get; set; }
+        public int technicianProfileCopyId { get; set; }
         public TechnicianProfileCopy? technicianProfileCopy { get; set; }
 
         // الأسعار

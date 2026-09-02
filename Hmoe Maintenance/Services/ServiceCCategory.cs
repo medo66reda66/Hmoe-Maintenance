@@ -18,7 +18,16 @@ namespace Hmoe_Maintenance.Services
         }
 
         //AdminANDCompany
-       
+        public async Task<List<Models.ServiceCategory>> GetServiceCategory()
+        {
+            var services = await _context.ServiceCategories.AsNoTracking()
+                .AsQueryable().ToListAsync();
+            if (!services.Any())
+            {
+                return null;
+            }
+            return services;
+        }
         public async Task<ServiceCategory> CreateServiceCategory(string comid, CreateServiceCategoryRequest CreateserviceCategory)
         {
             var serviceCategory = new ServiceCategory
@@ -139,6 +148,8 @@ namespace Hmoe_Maintenance.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+       
 
     }
 }

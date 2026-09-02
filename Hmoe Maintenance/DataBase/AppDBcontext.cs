@@ -30,6 +30,7 @@ namespace Hmoe_Maintenance.DataBase
         public DbSet<CompanyCopy> companyCopies { get; set; } = default!;
         public DbSet<TechnicianProfileCopy> TechnicianProfileCopies { get; set; } = default!;
         public DbSet<ApplicationuserOtp> applicationuserOtps { get; set; } = default!;
+        public DbSet<TechnicianPayout> technicianPayouts { get; set; } = default!;
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

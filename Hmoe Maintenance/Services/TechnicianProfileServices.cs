@@ -1,11 +1,14 @@
 using Hmoe_Maintenance.DataBase;
 using Hmoe_Maintenance.DTOs.Request;
+using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.DTOs.Response;
+using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Hmoe_Maintenance.Services.Interfaces;
 using Hmoe_Maintenance.SignalRWebAPI;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Hmoe_Maintenance.Services
 {
@@ -25,9 +28,10 @@ namespace Hmoe_Maintenance.Services
         public async Task<TechnincianProfileResponse?> GetMyTechnicianProfile(string techid)
         {
             var profile = await _Context.TechnicianProfiles
-                .Include(t => t.Company)
+                .Include(t => t.CompanyCopy)
                 .Include(t => t.User)
-                .Include(t => t.TechnicianServices)
+                .Include(e=>e.TechnicianServices)
+                   .ThenInclude(e=>e.ServiceCategory)
                 .FirstOrDefaultAsync(t => t.UserId == techid);
 
             if (profile == null)
@@ -38,7 +42,7 @@ namespace Hmoe_Maintenance.Services
             var showProfile = new TechnincianProfileResponse
             {
                 Id = profile.Id,
-                CompanyName = profile.Company != null ? profile.Company.Name : string.Empty,
+                CompanyName = profile.CompanyCopy != null ? profile.CompanyCopy.Name : string.Empty,
                 FullName = profile.Fullname,
                 PhoneNumber = profile.User != null ? profile.User.PhoneNumber! : string.Empty,
                 Email = profile.User != null ? profile.User.Email! : string.Empty,
@@ -47,7 +51,12 @@ namespace Hmoe_Maintenance.Services
                 NationalIdFrontImageUrl = profile.NationalIdFrontImageUrl,
                 NationalIdBackImageUrl = profile.NationalIdBackImageUrl,
                 TechnicianDocumentUrl = profile.TechnicianDocumentUrl,
-                technicianServices = profile.TechnicianServices.Select(e => e.ServiceCategory)!,
+                technicianServices = profile.TechnicianServices.Select(e => new ServiceCategory
+                {
+                    Name = e.ServiceCategory.Name,
+                    Description = e.ServiceCategory.Description,
+                    IsActive = e.ServiceCategory.IsActive
+                }).ToList(),
                 YearsOfExperience = profile.YearsOfExperience,
                 Status = profile.Status,
                 ApprovedByUserId = profile.ApprovedByUserId,
@@ -63,18 +72,82 @@ namespace Hmoe_Maintenance.Services
             return showProfile;
         }
 
+        public async Task<List<ShowReviewsResponse>> GetReviews(int techId,FilterReviewRequest filter)
+        {
+            //    var reviews = _Context.Reviews
+            //        .Where(e => e == techId)
+            //        .AsNoTracking()
+            //        .AsQueryable();
+
+            //   FilterReviewResponse filterReviewResponse = new FilterReviewResponse();
+
+            //    if (filter.MinRating != null)
+            //    {
+            //        reviews = reviews
+            //            .Where(e => e.Rating >= filter.MinRating);
+            //        filterReviewResponse.MinRating = filter.MinRating;
+            //    }
+
+            //    if (filter.MaxRating != null)
+            //    {
+            //        reviews = reviews
+            //            .Where(e => e.Rating <= filter.MaxRating);
+            //        filterReviewResponse.MaxRating = filter.MaxRating;
+            //    }
+
+            //    if (filter.CustomerId != null)
+            //    {
+            //        reviews = reviews
+            //            .Where(e => e.CustomerId == filter.CustomerId);
+            //        filterReviewResponse.CustomerId = filter.CustomerId;
+            //    }
+
+            //    if (filter.requestnum != null)
+            //    {
+            //        reviews = reviews
+            //            .Where(e => e.MaintenanceRequest.RequestNumber == filter.requestnum);
+            //        filterReviewResponse.requestnum = filter.requestnum;
+            //    }
+
+            //    var result = await reviews
+            //        .OrderByDescending(e => e.CreatedAt)
+            //        .Select(e => new ShowReviewsResponse
+            //        {
+            //            MaintenanceRequestId = e.MaintenanceRequestId,
+            //            Requestnum = e.MaintenanceRequest.RequestNumber,
+            //            MaintenanceRequestCity = e.MaintenanceRequest.City,
+            //            MaintenanceRequestGovernorate = e.MaintenanceRequest.Governorate,
+
+            //            CustomerId = e.CustomerId,
+            //            CustomerName = e.Customer.FullName,
+            //            CustomerEmail = e.Customer.Email,
+
+            //            CompanyId = e.CompanyId,
+            //            CompanyName = e.Company.Name,
+
+            //            TechnicianProfileId = e.TechnicianProfileId,
+
+            //            Rating = e.Rating,
+            //            Comment = e.Comment,
+            //            CreatedAt = e.CreatedAt
+            //        })
+            //        .ToListAsync();
+
+            return null;
+        }
+
         public async Task<TechnicianProfile> CreateTechniciaProfile(CreateTechnicianProfileRequest request , string userId)
         {
             var tech = await _userManager.Users.FirstOrDefaultAsync(u => u.Id == userId);
             var technicianProfile = new TechnicianProfile
             {
-                UserId= userId,
-                CompanyId = request.CompanyId,
+                UserId = userId,
+                CompanyCopyId = request.CompanycopyId,
                 NationalId = request.NationalId,
                 Fullname = request.Fullname,
                 YearsOfExperience = request.YearsOfExperience,
-                Email= tech.Email,
-                PhoneNumper= request.PhoneNumper,
+                Email = tech.Email,
+                PhoneNumper = request.PhoneNumper,
                 Bio = request.Bio,
                 Status = TechnicianStatus.Pending,
                 IsActive = true,
@@ -125,7 +198,7 @@ namespace Hmoe_Maintenance.Services
             _Context.TechnicianProfiles.Add(technicianProfile);
             await _Context.SaveChangesAsync();
 
-            var ownerCompany = await _Context.Companies.FirstOrDefaultAsync(x => x.Id == technicianProfile.CompanyId);
+            var ownerCompany = await _Context.companyCopies.FirstOrDefaultAsync(x => x.Id == technicianProfile.CompanyCopyId);
             var notification = new Notification
             {
                 UserId = ownerCompany.ApplicationUserId!,
@@ -156,7 +229,7 @@ namespace Hmoe_Maintenance.Services
                 return null;
             }
 
-            profile.CompanyId = request.CompanyId;
+            profile.CompanyCopyId = request.CompanycopyId;
             profile.Fullname = request.Fullname;
             profile.NationalId = request.NationalId;
             profile.YearsOfExperience = request.YearsOfExperience;
@@ -251,7 +324,7 @@ namespace Hmoe_Maintenance.Services
 
             if (request.TechnicianDocumentUrl != null || request.TechnicianDocumentUrl != null || request.NationalIdFrontImageUrl !=null || request.NationalIdBackImageUrl !=null)
             {
-                var ownerCompany = await _Context.Companies.FirstOrDefaultAsync(x => x.Id == profile.CompanyId);
+                var ownerCompany = await _Context.companyCopies.FirstOrDefaultAsync(x => x.Id == profile.CompanyCopyId);
                 var notification = new Notification
                 {
                     UserId = ownerCompany.ApplicationUserId!,

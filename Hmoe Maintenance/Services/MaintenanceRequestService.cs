@@ -28,7 +28,7 @@ namespace Hmoe_Maintenance.Services
             _notificationService = notificationService;
         }
 
-        public async Task<PaginationResponse<Notification>> GetAllNotificationToClient(string clientid,FilternotificationRequest filternotification,int page)
+        public async Task<PaginationResponse<Notification,FilternotificationRespons>> GetAllNotificationToClient(string clientid,FilternotificationRequest filternotification,int page)
         {
             var notification =  _Context.Notification.Where(e => e.UserId == clientid && e.IsRead == false)
                 .OrderByDescending(e => e.CreatedAt)
@@ -51,7 +51,7 @@ namespace Hmoe_Maintenance.Services
                 filternotificationRespons.Isread = filternotification.IsRead.Value;
             }
 
-            var Result = await PaginationService.PaginateAsync(notification, page, 5);
+            var Result = await PaginationService.PaginateAsync(notification, page,filternotificationRespons, 5);
 
             return Result;
         }
@@ -65,7 +65,7 @@ namespace Hmoe_Maintenance.Services
 
         }
 
-        public async Task<PaginationResponse<MaintenanceRequestResponse>> GetAllMaintenanceRequestByClient(string clientid,FilterMaintenanceRequest filter,int page)
+        public async Task<PaginationResponse<MaintenanceRequestResponse,FilterMaintenanceResponse>> GetAllMaintenanceRequestByClient(string clientid,FilterMaintenanceRequest filter,int page)
         {
             var maintenanceRequests = _Context.MaintenanceRequests
                .Where(e => e.CustomerId == clientid)
@@ -78,9 +78,9 @@ namespace Hmoe_Maintenance.Services
 
                    CustomerId = e.CustomerId,
 
-                   CompanyId = e.CompanyId,
-                   CompanyName = e.Company.Name,
-                   CompanyEmail = e.Company.Email,
+                   CompanyId = e.CompanycopyId,
+                   CompanyName = e.CompanyCopy.Name,
+                   CompanyEmail = e.CompanyCopy.Email,
 
                    ServiceCategoryId = e.ServiceCategoryId,
                    ServiceName = e.ServiceCategory.Name,
@@ -151,7 +151,7 @@ namespace Hmoe_Maintenance.Services
                     .Where(e => e.City.Contains(filter.City));
                 maintenanceResponse.City = filter.City;
             }
-            var result =await PaginationService.PaginateAsync(maintenanceRequests, page, 5);
+            var result =await PaginationService.PaginateAsync(maintenanceRequests, page, maintenanceResponse, 5);
 
             return result;
 
@@ -177,7 +177,7 @@ namespace Hmoe_Maintenance.Services
             {
                 RequestNumber = Guid.NewGuid().ToString(),
                 CustomerId = userid,
-                CompanyId = createMaintenanceRequest.CompanyId,
+                CompanycopyId = createMaintenanceRequest.CompanyId,
                 ServiceCategoryId = createMaintenanceRequest.ServiceCategoryId,
                 AddressId = adress.Id,
                 Governorate = createMaintenanceRequest.Governorate,
@@ -252,14 +252,14 @@ namespace Hmoe_Maintenance.Services
                 return false;
             notification.IsRead = true;
 
-            var request =await _Context.MaintenanceRequests.Include(e=>e.Company).Include(e=>e.Customer)
+            var request =await _Context.MaintenanceRequests.Include(e=>e.CompanyCopy).Include(e=>e.Customer)
                 .FirstOrDefaultAsync(e => e.RequestNumber == notification.RelatedEntityId);
 
             request.Status = MaintenanceRequestStatus.clientApproveprice;
 
             var companyNotification = new Notification
             {
-                UserId = request.Company.ApplicationUserId,
+                UserId = request.CompanyCopy.ApplicationUserId,
                 Title = $"Price Offer Accepted from:{request.Customer.FullName}",
                 Message = "The customer has accepted your price offer. You can now assign a technician to begin the maintenance request.",
                 Type = NotificationType.PriceOfferAccepted,
@@ -283,7 +283,7 @@ namespace Hmoe_Maintenance.Services
             notification.IsRead = true;
 
             var request = await _Context.MaintenanceRequests
-                .Include(e => e.Company)
+                .Include(e => e.CompanyCopy)
                 .Include(e => e.Customer)
                 .FirstOrDefaultAsync(e => e.RequestNumber == notification.RelatedEntityId);
 
@@ -294,7 +294,7 @@ namespace Hmoe_Maintenance.Services
 
             var companyNotification = new Notification
             {
-                UserId = request.Company.ApplicationUserId,
+                UserId = request.CompanyCopy.ApplicationUserId,
                 Title = $"Price Offer Rejected from:{request.Customer.FullName}",
                 Message = "The customer has rejected your price offer. You can review the offer and send a new one if needed.",
                 Type = NotificationType.PriceOfferRejected,
@@ -395,9 +395,9 @@ namespace Hmoe_Maintenance.Services
 
         public async Task<Models.Review> Review(int maintenanceRequestId, string userId, int rating, string comment)
         {
-            var maintenanceRequest = await _Context.MaintenanceRequests
+            var maintenanceRequest = await _Context.MaintenanceRequests.Include(e=>e.technicianProfileCopy.Id)
                 .FirstOrDefaultAsync(m => m.Id == maintenanceRequestId && m.CustomerId == userId);
-
+            
             if (maintenanceRequest == null || maintenanceRequest.Status != MaintenanceRequestStatus.Completed)
             {
                 throw new InvalidOperationException("Maintenance request not found or not completed.");
@@ -406,12 +406,29 @@ namespace Hmoe_Maintenance.Services
             {
                 MaintenanceRequestId = maintenanceRequestId,
                 CustomerId = userId,
-                TechnicianProfileId = maintenanceRequest.technicianProfileCopyId,
+                CompanyCopyId = maintenanceRequest.CompanyCopy.Id,
+                TechnicianProfileCopyId = maintenanceRequest.technicianProfileCopyId,
                 Rating = rating,
                 Comment = comment,
                 CreatedAt = DateTime.UtcNow
             };
             await _Context.Reviews.AddAsync(review);
+
+            var reviews =await _Context.Reviews.Where(e => e.TechnicianProfileCopyId == maintenanceRequest.technicianProfileCopyId)
+                .ToListAsync();
+
+            reviews.Add(review);
+
+            decimal averageRating = (decimal)reviews.Average(e => e.Rating);
+
+            var technician = await _Context.TechnicianProfileCopies
+                .FirstOrDefaultAsync(e =>
+                    e.Id == maintenanceRequest.technicianProfileCopyId);
+
+            if (technician != null)
+            {
+                technician.AverageRating = averageRating;
+            }
             await _Context.SaveChangesAsync();
             return review;
         }

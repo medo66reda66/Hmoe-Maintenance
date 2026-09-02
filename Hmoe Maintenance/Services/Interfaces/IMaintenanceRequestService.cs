@@ -1,6 +1,7 @@
 ﻿using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.DTOs.Response;
+using Hmoe_Maintenance.DTOs.Response.filter;
 using Hmoe_Maintenance.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,10 +9,10 @@ namespace Hmoe_Maintenance.Services.Interfaces
 {
     public interface IMaintenanceRequestService
     {
-        Task<PaginationResponse<Notification>> GetAllNotificationToClient(string clientid, FilternotificationRequest filternotification, int page );
+        Task<PaginationResponse<Notification,FilternotificationRespons>> GetAllNotificationToClient(string clientid, FilternotificationRequest filternotification, int page );
 
         Task<Notification> GetNotificationByclientById(int id, string clienid);
-        Task<PaginationResponse<MaintenanceRequestResponse>> GetAllMaintenanceRequestByClient(string clientid, FilterMaintenanceRequest filter, int page);
+        Task<PaginationResponse<MaintenanceRequestResponse,FilterMaintenanceResponse>> GetAllMaintenanceRequestByClient(string clientid, FilterMaintenanceRequest filter, int page);
         Task<List<Payment>> GetallPaymentByMaintenanceRequestId(string clientid);
            Task<CreateMaintenanceRequest> createMaintenance(CreateMaintenanceRequest createMaintenanceRequest, string userid);
             Task<bool> Approveprice(int notificationId);

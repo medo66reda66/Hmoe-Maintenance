@@ -5,7 +5,7 @@ namespace Hmoe_Maintenance.DTOs.Request
 {
     public class CreateTechnicianProfileRequest
     {
-        public int CompanyId { get; set; }
+        public int CompanycopyId { get; set; }
         [Required]
         public string Fullname { get; set; }
         [Required]

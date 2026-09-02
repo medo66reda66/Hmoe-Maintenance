@@ -35,7 +35,7 @@ namespace Hmoe_Maintenance.Controllers
 
             var notifications = await _technicianControlService.GetAllNotificationByTech(technicianId,filternotification,page);
 
-            if (notifications == null)
+            if (notifications.Datarequest == null)
                 return NotFound("No notifications found.");
 
             return Ok(notifications);

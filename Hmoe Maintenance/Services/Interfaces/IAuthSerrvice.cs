@@ -16,7 +16,9 @@ namespace Hmoe_Maintenance.Services.Interfaces
         Task<ForgetPasswordRequest> ForgetPassword(ForgetPasswordRequest forgetPassword);
         Task<ApplicationuserOtp> ValidateOTP(ValidateOTPRequest validateOTP);
         Task<IdentityResult> NewPassword(NewPasswordRequest newPassword);
-      
+        Task Logout();
+
+
 
      }
 }

@@ -36,7 +36,7 @@ namespace Hmoe_Maintenance.Services
                         throw new System.Exception("Maintenance request not found.");
                     }
 
-                    var tatalCost = (maintenanceRequest.FinalPrice + maintenanceRequest.AdditionalCostsTotal);
+                var tatalCost = (maintenanceRequest.FinalPrice + maintenanceRequest.AdditionalCostsTotal);
 
                     var payment = new Payment
                     {
@@ -71,6 +71,15 @@ namespace Hmoe_Maintenance.Services
                 payment.PaidAt = DateTime.UtcNow;
                 payment.GatewayName = "Stripe";
                 payment.MaintenanceRequest.PaymentApproved = true;
+
+                var tech = await _context.TechnicianProfileCopies
+                          .FirstOrDefaultAsync(e => e.Id == payment.MaintenanceRequest.technicianProfileCopyId);
+                if (tech == null)
+                {
+                    return null;
+                }
+                tech.TotalAmount += (payment.Amount - (payment.Amount * (tech.RevenueShare / 100)));
+
                 await _context.SaveChangesAsync();
                 return payment;
             }

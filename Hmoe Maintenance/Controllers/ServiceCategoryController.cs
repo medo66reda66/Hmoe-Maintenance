@@ -20,8 +20,19 @@ namespace Hmoe_Maintenance.Controllers
             _serviceCategory = serviceCategory;
         }
 
-        [HttpGet]
-        
+        [HttpGet("GetServiceCategory")]
+        public async Task<IActionResult> GetServiceCategory()
+        {
+            var services = await _serviceCategory.GetServiceCategory();
+
+            if (services == null)
+            {
+                return NotFound("No service categories found.");
+            }
+
+            return Ok(services);
+        }
+
         [HttpPost("Create")]
         [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
         public async Task<IActionResult> CreateServiceCategory(CreateServiceCategoryRequest createServiceCategoryRequest)

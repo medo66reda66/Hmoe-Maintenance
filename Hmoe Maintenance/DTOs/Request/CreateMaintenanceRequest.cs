@@ -10,7 +10,8 @@ namespace Hmoe_Maintenance.DTOs.Request
         [Required]
         public int CompanyId { get; set; }
         [Required]
-
+        public int CompanyCopyId { get; set; }
+        [Required]
         public int ServiceCategoryId { get; set; }
         [Required]
 

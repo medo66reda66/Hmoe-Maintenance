@@ -29,6 +29,5 @@
         public int? CompletedRequestsCount { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        public List<CompanyCoverageArea> CompanyCoverageAreas { get; set; }
     }
 }

@@ -14,8 +14,8 @@
         public string UserId { get; set; } = default!;
         public ApplicationUser? User { get; set; } = default!;
 
-        public int CompanyId { get; set; }
-        public Company? Company { get; set; } = default!;
+        public int? CompanyCopyId { get; set; }
+        public CompanyCopy? CompanyCopy { get; set; }
 
         public string Fullname { get; set; }
         public string NationalId { get; set; } = default!;
@@ -42,9 +42,8 @@
 
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public decimal TotalAmount { get; set; }
 
-        public ICollection<TechnicianService>? TechnicianServices { get; set; }
-            = new List<TechnicianService>();
     }
 }
 

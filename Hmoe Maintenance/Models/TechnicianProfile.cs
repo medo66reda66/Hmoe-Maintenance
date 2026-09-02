@@ -14,9 +14,8 @@
         public string UserId { get; set; } = default!;
         public ApplicationUser? User { get; set; } = default!;
 
-        public int CompanyId { get; set; }
-        public Company? Company { get; set; } = default!;
-
+        public int? CompanyCopyId { get; set; }
+        public CompanyCopy? CompanyCopy { get; set; }
         public string Fullname { get; set; }
         public string NationalId { get; set; } = default!;
         public string ProfileImageUrl { get; set; } = default!;

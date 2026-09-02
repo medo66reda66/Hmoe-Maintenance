@@ -5,27 +5,29 @@ namespace Hmoe_Maintenance.Services
 {
     public class PaginationService
     {
-        public static async Task<PaginationResponse<T>> PaginateAsync<T>(
-        IQueryable<T> query,
-        int page ,
+        public static async Task<PaginationResponse<Trequest,Tresponse>> PaginateAsync<Trequest, Tresponse>(
+        IQueryable<Trequest> queryRequest,
+        int page,
+        Tresponse? queryresponse = default,
         int pageSize = 5)
         {
-            var totalCount = await query.CountAsync();
+            var totalCount = await queryRequest.CountAsync();
 
             var totalPages = (int)Math.Ceiling(
                 totalCount / (double)pageSize
             );
 
-            var data = await query
+            var datarequest = await queryRequest
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
-            return new PaginationResponse<T>
+            return new PaginationResponse<Trequest, Tresponse>
             {
                 CurrentPage = page,
                 TotalPages = totalPages,
-                Data = data
+                Datarequest = datarequest,
+                Dataresponse = queryresponse
             };
         }
     }

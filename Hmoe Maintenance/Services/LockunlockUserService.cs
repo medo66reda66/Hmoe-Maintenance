@@ -22,7 +22,7 @@ namespace Hmoe_Maintenance.Services
             _dBcontext = dBcontext;
         }
 
-        public async Task<PaginationResponse<UsersResponse>> Index(FilterUsersRequest filter,int page)
+        public async Task<PaginationResponse<UsersResponse,FilterUsersResponse>> Index(FilterUsersRequest filter,int page)
         {
             var users = _userManager.Users.AsQueryable()
                 .Select(users => new UsersResponse
@@ -59,7 +59,7 @@ namespace Hmoe_Maintenance.Services
                 filterUsersResponse.Lockout = filter.loukout.Value;
             }
 
-            var result =await PaginationService.PaginateAsync(users, page, 10);
+            var result =await PaginationService.PaginateAsync(users, page, filterUsersResponse, 10);
             return result;
 
         }

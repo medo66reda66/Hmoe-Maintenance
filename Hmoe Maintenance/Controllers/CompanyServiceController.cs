@@ -1,4 +1,5 @@
 ﻿using Ecommers.Api.Utilities;
+using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -43,7 +44,7 @@ namespace Hmoe_Maintenance.Controllers
         public async Task<IActionResult> GetAllCompanyServices([FromQuery]FiltercompanyserviceResquest filtercompanyservice,int page = 1)
         {
             var companyServices = await _companyServiceservice.GetAllCompanyServices(filtercompanyservice,page);
-            if (companyServices == null)
+            if (companyServices.Datarequest == null)
             {
                 return NotFound("No company services found.");
             }
@@ -62,7 +63,26 @@ namespace Hmoe_Maintenance.Controllers
             return Ok(companyService);
         }
 
+        [HttpPost("CreateServiceTomyCompany")]
+        [Authorize(Roles = ($"{DS.ADMIN_ROLE},{DS.COMPANYOWNER_ROLE}"))]
+        public async Task<IActionResult> CreateServiceTomyCompany([FromBody] CreateCompanyServiceRequest createCompanyService)
+        {
+            var compid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (compid == null)
+            {
+                return NotFound();
+            }
 
+            var result = await _companyServiceservice.CreateServiceTomyCompany(
+                compid,
+                createCompanyService);
 
+            if (result == null)
+            {
+                return NotFound("Company not found.");
+            }
+
+            return Ok(result);
+        }
     }
 }

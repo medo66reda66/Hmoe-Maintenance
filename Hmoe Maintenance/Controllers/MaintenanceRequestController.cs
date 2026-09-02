@@ -35,7 +35,7 @@ namespace Hmoe_Maintenance.Controllers
             }
 
             var result =await _maintenanceRequestService.GetAllNotificationToClient(clientid,filternotification,page);
-            if (result == null)
+            if (result.Datarequest == null)
             {
                return NotFound();
             }
@@ -70,7 +70,7 @@ namespace Hmoe_Maintenance.Controllers
                 return BadRequest("User not found.");
             }
             var result = await _maintenanceRequestService.GetAllMaintenanceRequestByClient(userId,filterMaintenance,page);
-            if (result == null)
+            if (result.Datarequest == null)
             {
                 return NotFound("No maintenance requests found for the user.");
             }

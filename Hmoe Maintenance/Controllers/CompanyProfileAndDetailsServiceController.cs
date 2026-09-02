@@ -39,11 +39,21 @@ namespace Hmoe_Maintenance.Controllers
         public async Task<IActionResult> GetAllCompanyProfileAndDetailsService(int serviceid, [FromQuery] FilterCompanyProfileRequest filter, [FromQuery] int page = 1)
         {
             var companyProfiles = await _companyProfileAndDetailsService.AllCompanyProfileAndDetailsService(serviceid, filter, page);
-            if(companyProfiles.Data == null || !companyProfiles.Data.Any())
+            if(companyProfiles.Datarequest == null || !companyProfiles.Datarequest.Any())
             {
                 return NotFound();
             }
             return Ok(companyProfiles);
+        }
+        [HttpGet("GetTopTenCompany")]
+        public async Task<IActionResult> GetTopTenCompany()
+        {
+            var result =await _companyProfileAndDetailsService.Gettoptencompany();
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
     }
 }

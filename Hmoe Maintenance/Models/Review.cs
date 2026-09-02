@@ -10,11 +10,11 @@
         public string CustomerId { get; set; } = default!;
         public ApplicationUser? Customer { get; set; } = default!;
 
-        public int CompanyId { get; set; }
-        public Company? Company { get; set; } = default!;
+        public int CompanyCopyId { get; set; }
+        public CompanyCopy? companyCopy { get; set; } = default!;
 
-        public int? TechnicianProfileId { get; set; }
-        public TechnicianProfile? TechnicianProfile { get; set; }
+        public int? TechnicianProfileCopyId { get; set; }
+        public TechnicianProfileCopy? technicianProfileCopy { get; set; }
 
         public int Rating { get; set; } // من 1 إلى 5
 

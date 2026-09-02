@@ -4,7 +4,7 @@ namespace Hmoe_Maintenance.DTOs.Request
 {
     public class UpdateTechniciaProfileRequest
     {
-        public int CompanyId { get; set; }
+        public int CompanycopyId { get; set; }
         [Required]
         public string Fullname { get; set; }
         [Required, EmailAddress]

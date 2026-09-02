@@ -4,7 +4,6 @@ namespace Hmoe_Maintenance.SignalRWebAPI
 {
     public interface INotificationService
     {
-
         Task SendToUserAsync(Notification notification);
     }
 }

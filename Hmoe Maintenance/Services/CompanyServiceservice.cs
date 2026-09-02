@@ -1,4 +1,5 @@
 ﻿using Hmoe_Maintenance.DataBase;
+using Hmoe_Maintenance.DTOs.Request;
 using Hmoe_Maintenance.DTOs.Request.filter;
 using Hmoe_Maintenance.DTOs.Response;
 using Hmoe_Maintenance.DTOs.Response.filter;
@@ -17,7 +18,7 @@ namespace Hmoe_Maintenance.Services
         }
 
         //Admiiiiiin
-        public async Task<PaginationResponse<ShowCompanyServiceResponse>> GetAllCompanyServices(FiltercompanyserviceResquest filtercompanyservice ,int page)
+        public async Task<PaginationResponse<ShowCompanyServiceResponse,FiltercompanyserviceResponse>> GetAllCompanyServices(FiltercompanyserviceResquest filtercompanyservice ,int page)
         {
             var companyService = _context.CompanyServices
                 .Include(e => e.Company)
@@ -62,7 +63,7 @@ namespace Hmoe_Maintenance.Services
                 filtercompanyserviceResponse.IsActive = filtercompanyservice.isActive.Value;
             }
 
-            var result = await PaginationService.PaginateAsync(showCompanyService, page, 5);
+            var result = await PaginationService.PaginateAsync(showCompanyService, page, filtercompanyserviceResponse, 5);
 
             return result;
         }
@@ -108,6 +109,41 @@ namespace Hmoe_Maintenance.Services
                 Description = companyService.Description,
                 IsActive = companyService.IsActive
             }).ToListAsync();
+
+            return showCompanyService;
+        }
+
+        public async Task<ShowCompanyServiceResponse> CreateServiceTomyCompany(string compid,CreateCompanyServiceRequest createCompanyService)
+        {
+            var MyCompany =await _context.Companies.FirstOrDefaultAsync(e=>e.ApplicationUserId == compid);
+            if (MyCompany == null)
+            {
+                return null;
+            }
+
+            var companyService = new Models.CompanyService()
+            {
+                ServiceCategoryId = createCompanyService.ServiceCategoryId,
+                CompanyId = MyCompany.Id,
+                Description = createCompanyService.Description,
+                InspectionPrice = createCompanyService.InspectionPrice,
+                StartingPrice = createCompanyService.StartingPrice,
+                IsActive = createCompanyService.IsActive
+            };
+
+            await _context.CompanyServices.AddAsync(companyService);
+            await _context.SaveChangesAsync();
+
+            var showCompanyService = new ShowCompanyServiceResponse()
+            {
+                companyName = MyCompany.Name,
+                companyDescription = MyCompany.Description,
+                ServiceId = companyService.ServiceCategoryId,
+                InspectionPrice = companyService.InspectionPrice,
+                StartingPrice = companyService.StartingPrice,
+                IsActive = companyService.IsActive,
+                ServiceDescription = companyService.Description
+            };
 
             return showCompanyService;
         }
