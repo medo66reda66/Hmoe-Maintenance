@@ -12,7 +12,7 @@ namespace Hmoe_Maintenance.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles =$"{DS.COMPANYOWNER_ROLE}")]
+    [Authorize(Roles =$"{DS.COMPANYOWNER_ROLE},{DS.ADMIN_ROLE}")]
     public class AdminTechnicianBycompController : ControllerBase
     {
         private readonly Services.Interfaces.IAdminTechnicianByCOMPService _adminTechnicianService;
@@ -55,6 +55,7 @@ namespace Hmoe_Maintenance.Controllers
         }
 
         [HttpGet("GetTechPayout")]
+        [Authorize(Roles = $"{DS.COMPANYOWNER_ROLE}")]
         public async Task<IActionResult> GetTechPayout([FromQuery] FilterTechPayoutRequest filter,int page = 1)
         {
                 var compid = User.FindFirstValue(ClaimTypes.NameIdentifier);

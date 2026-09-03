@@ -65,6 +65,7 @@ namespace Hmoe_Maintenance
             builder.Services.AddScoped<IPaymentService, PaymentService>();
             builder.Services.AddScoped<IAdminCompanyTechService, AdminCompanyTechService>();
             builder.Services.AddScoped<IMaintenanceRequestService, MaintenanceRequestService>();
+            builder.Services.AddScoped<IProfileUserService, ProfileUserService>();
             builder.Services.AddScoped<ILockunlockUserService, LockunlockUserService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
             builder.Services.AddScoped<IAdminTechnicianByCOMPService, AdminTechnicianByCOMPService>();
